@@ -44,7 +44,11 @@ void ASnakePawn::BeginPlay()
 	// Runtime intialization, adding input mapping contexts, reference that depend on having a world
 	Super::BeginPlay();
 	
+	// Event trigger for food collection
 	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASnakePawn::OnOverlapBegin);
+	
+	// Event trigger for collision (walls)
+	CollisionComponent->OnComponentHit.AddDynamic(this, &ASnakePawn::OnHit);
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -162,6 +166,17 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 		Food->Destroy();
 		AddSegment();
 		UpdateHUDScore();
+	}
+}
+
+// Collision function
+void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
+	{
+		// Kill the snake — for now just destroy, later swap for Game Over logic
+		Destroy();
 	}
 }
 
