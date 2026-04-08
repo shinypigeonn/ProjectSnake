@@ -9,6 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Food.h"
+#include "SnakeGameMode.h"
 
 // Sets default values
 ASnakePawn::ASnakePawn()
@@ -171,13 +172,20 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 
 // Collision function
 void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+    UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
-	{
-		// Kill the snake — for now just destroy, later swap for Game Over logic
-		Destroy();
-	}
+	// Log every hit regardless of tag, so we know OnHit fires at all
+	UE_LOG(LogTemp, Warning, TEXT("OnHit fired! Hit actor: %s"), *OtherActor->GetName());
+
+    if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
+    {
+        if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+        {
+        	UE_LOG(LogTemp, Warning, TEXT("Hit a WALL!"));
+            GameMode->OnGameOver();
+        }
+        Destroy();
+    }
 }
 
 void ASnakePawn::UpdateHUDScore()
