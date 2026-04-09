@@ -10,9 +10,23 @@ ASnakeGameMode::ASnakeGameMode()
 void ASnakeGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	Grid = FSnakeGrid(50, 20);
+	SpawnTiles();
 	SetGameState(EGameState::Playing);
 }
 
+void ASnakeGameMode::SpawnTiles()
+{
+	/*for (int32 y = 0; y < Grid.Height; y++)
+	{
+		for (int32 X = 0; x < Grid.Width; x++)
+		{
+			//FVector Pos(X * TileSize, Y * TileSize, 0.f);
+            //AActor* Tile = GetWorld()->SpawnActor<AActor>(TileBP, Pos, FRotator::ZeroRotator);
+            //TileActors.Add(Tile);
+		}
+	}*/
+}
 void ASnakeGameMode::SetGameState(EGameState NewState)
 {
 	CurrentState = NewState;

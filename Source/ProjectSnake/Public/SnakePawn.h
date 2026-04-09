@@ -31,7 +31,8 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	
-	// Snake head properties
+	#pragma region SNAKEPROPERTIES
+	// ----------------- SNAKE PAWN PROPERTIES --------------------------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
 
@@ -59,7 +60,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float TurnSpeed = 200.0f;
 	
-	// Snake Segment properties
+	// ---------------- SNAKE SEGMENT PROPERTIES  ----------------------
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
 	TSubclassOf<ASnakeSegment> SegmentClass;
 
@@ -72,18 +73,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
 	int32 SegmentSpacing = 60;
 	
+	UPROPERTY(EditAnywhere)
+	int32 InitialSegments = 3;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ASnakeSegment> SnakeSegment;
+#pragma endregion
 	
+	// ----------------------- HUD ---------------------------------
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
-
 	UPROPERTY()
 	USnakeHUD* HUDWidget;
-
+	
 	void UpdateHUDScore();
 	
 	int32 Score = 0;
+	//---------------------------------------------------------------
 	
 	// Hit event for food overlap
 	UFUNCTION()
@@ -97,6 +103,7 @@ protected:
 		UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
 	void AddSegment();
+	void SetupSegmentPositions();
 
 public:	
 	// Called every frame

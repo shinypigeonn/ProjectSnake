@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "SnakeGrid.h"
 #include "SnakeGameMode.generated.h"
 
 UENUM(BlueprintType)
@@ -20,6 +21,8 @@ UCLASS()
 class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+	
+	FSnakeGrid Grid;
 	
 	public:
 	ASnakeGameMode();
@@ -43,6 +46,17 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	float RestartDelay = 3.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Grid")
+	TSubclassOf<AActor> TileBP;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Grid")
+	float TileSize = 100.f;
+	
+	TArray<AActor*> TileActors;
+	
+	void SpawnTiles();
+	void RefreshTile(FIntPoint Pos);
 	
 	private:
 	EGameState CurrentState = EGameState::MainMenu;

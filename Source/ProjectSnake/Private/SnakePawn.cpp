@@ -45,6 +45,9 @@ void ASnakePawn::BeginPlay()
 	// Runtime intialization, adding input mapping contexts, reference that depend on having a world
 	Super::BeginPlay();
 	
+	//Initializing snake body
+	SetupSegmentPositions();
+	
 	// Event trigger for food collection
 	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASnakePawn::OnOverlapBegin);
 	
@@ -85,14 +88,7 @@ void ASnakePawn::Tick(float DeltaTime)
 
     // Save head position to history
     PositionHistory.Insert(GetActorLocation(), 0);
-
-    // Trim history so it doesn't grow forever
-    int32 MaxHistory = (Segments.Num() + 1) * SegmentSpacing;
-    if (PositionHistory.Num() > MaxHistory)
-    {
-        PositionHistory.SetNum(MaxHistory);
-    }
-
+	
     // Move each segment to its position in history
     for (int32 i = 0; i < Segments.Num(); i++)
     {
@@ -133,6 +129,34 @@ void ASnakePawn::Move(const FInputActionValue& Value)
 void ASnakePawn::Turn(const FInputActionValue& Value)
 {
 	TurnInput = Value.Get<float>();
+}
+
+void ASnakePawn::SetupSegmentPositions()
+{
+    // 1. Pre-fill position history with positions behind the head
+    //    so segment placement has valid indices from the start.
+    FVector HeadLocation = GetActorLocation();
+    FVector BackwardDir = -GetActorForwardVector();
+
+    // We need at least (InitialSegments * SegmentSpacing) entries in history
+    int32 RequiredHistory = (InitialSegments + 1) * SegmentSpacing;
+    PositionHistory.Empty();
+    PositionHistory.Reserve(RequiredHistory);
+
+    for (int32 i = 0; i < RequiredHistory; i++)
+    {
+        // Each slot is 1 unit apart; segments sample every SegmentSpacing slots
+        PositionHistory.Add(HeadLocation + BackwardDir * i);
+    }
+
+    // 2. Spawn segments and place them at their correct history offset
+    for (int32 i = 0; i < InitialSegments; i++)
+    {
+        AddSegment(); // spawns and appends to Segments[]
+
+        int32 HistoryIndex = (i + 1) * SegmentSpacing;
+        Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
+    }
 }
 
 void ASnakePawn::AddSegment()
