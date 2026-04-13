@@ -11,6 +11,7 @@ class PROJECTSNAKE_API ASnakeSegment : public AActor
     
 public: 
     ASnakeSegment();
+    void SetMaterial(UMaterialInterface* Material);
 
 protected:
     virtual void BeginPlay() override;

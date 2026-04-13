@@ -13,3 +13,10 @@ void ASnakeSegment::BeginPlay()
 {
     Super::BeginPlay();
 }
+void ASnakeSegment::SetMaterial(UMaterialInterface* Material)
+{
+    if (VisualMesh && Material)
+    {
+        VisualMesh->SetMaterial(0, Material);
+    }
+}

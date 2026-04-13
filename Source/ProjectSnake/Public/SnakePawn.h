@@ -31,7 +31,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	
-	#pragma region SNAKEPROPERTIES
+#pragma region SNAKEPROPERTIES
 	// ----------------- SNAKE PAWN PROPERTIES --------------------------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
@@ -78,8 +78,12 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ASnakeSegment> SnakeSegment;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Snake")
+    TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
 #pragma endregion
 	
+#pragma region HUDPROPERTIES
 	// ----------------------- HUD ---------------------------------
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
@@ -90,6 +94,7 @@ protected:
 	
 	int32 Score = 0;
 	//---------------------------------------------------------------
+#pragma endregion
 	
 	// Hit event for food overlap
 	UFUNCTION()
@@ -115,4 +120,7 @@ public:
 private:
 	float MoveInput = 0.0f;
 	float TurnInput = 0.0f;
+	
+	int32 LastMaterialIndex = -1;
+    UMaterialInstance* GetNextMaterial();
 };

@@ -178,6 +178,7 @@ void ASnakePawn::AddSegment()
     	
     	NewSegment->AttachToActor(AttachTarget, FAttachmentTransformRules::KeepWorldTransform);
     	Segments.Add(NewSegment);
+    	NewSegment->SetMaterial(GetNextMaterial());
     }
 }
 
@@ -218,4 +219,19 @@ void ASnakePawn::UpdateHUDScore()
     {
         HUDWidget->UpdateScore(Score);
     }
+}
+
+UMaterialInstance* ASnakePawn::GetNextMaterial()
+{
+    if (WatercolorMaterials.IsEmpty()) return nullptr;
+
+    int32 Index;
+    do
+    {
+        Index = FMath::RandRange(0, WatercolorMaterials.Num() - 1);
+    }
+    while (Index == LastMaterialIndex && WatercolorMaterials.Num() > 1);
+
+    LastMaterialIndex = Index;
+    return WatercolorMaterials[Index];
 }
