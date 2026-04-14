@@ -188,7 +188,7 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 {
 	if (AFood* Food = Cast<AFood>(OtherActor))
 	{
-		Score++;
+		Score += Food->FoodData.PointValue;
 		Food->OnEaten();
 		AddSegment();
 		UpdateHUDScore();

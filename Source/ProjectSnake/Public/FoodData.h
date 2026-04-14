@@ -6,10 +6,10 @@
 UENUM(BlueprintType)
 enum class EFoodType : uint8
 {
-    Basic       UMETA(DisplayName="Basic"),
-    Special     UMETA(DisplayName="Special"),
-    SpeedBoost  UMETA(DisplayName="Speed Boost"),
-    Golden      UMETA(DisplayName="Golden")
+    Basic       UMETA(DisplayName="Basic"), // Least number of points (common fruits)
+    Special     UMETA(DisplayName="Special"), // More points (not as common fruits)
+    SpeedBoost  UMETA(DisplayName="Speed Boost"), // Food that gives speed boost
+    Golden      UMETA(DisplayName="Golden") // Food that gives invisibility
 };
 
 USTRUCT(BlueprintType)
