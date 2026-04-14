@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "FoodData.h"
 #include "Food.generated.h"
 
 UCLASS()
@@ -15,12 +16,19 @@ public:
 	// Sets default values for this actor's properties
 	AFood();	
 	
-	virtual void VisualEffect();
-	virtual void FoodPoints();
-	virtual void SoundEffect();
-	virtual void Tick(float DeltaTime) override;
+	// TODO: Make "Foodpoints" to a blueprint function that uses enum, 
+	// "BASIC" "SPECIAL" "SPEED BOOST" "GOLDEN(INVISIBILITY), t
+	// hat function controls the data of the fruit (target selector?), and its points, and "benefits"
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FFoodData FoodData;
 	
-	int32 GetPointValue() const { return PointValue; }
+	UFUNCTION(BlueprintImplementableEvent)
+	void VisualEffect();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void SoundEffect();
+	
+	virtual void Tick(float DeltaTime) override;
 	
 	// Called when the snake eats this food
 	// Override in Blueprint children for special on-eaten behavior
@@ -33,10 +41,6 @@ protected:
 	// The mesh that represents the food visually
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UStaticMeshComponent> FoodMesh;
-	
-	// Point value — set this per Blueprint child (e.g. NormalFood=10, BonusFood=50)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
-	int32 PointValue = 10;
 	
 	// How long this food stays spawned before disappearing (0 = no limit)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")

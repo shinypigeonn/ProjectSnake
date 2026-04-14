@@ -189,7 +189,7 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 	if (AFood* Food = Cast<AFood>(OtherActor))
 	{
 		Score++;
-		Food->Destroy();
+		Food->OnEaten();
 		AddSegment();
 		UpdateHUDScore();
 	}
@@ -199,7 +199,7 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// Log every hit regardless of tag, so we know OnHit fires at all
+	// Log every hit regardless of tag
 	UE_LOG(LogTemp, Warning, TEXT("OnHit fired! Hit actor: %s"), *OtherActor->GetName());
 
     if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
