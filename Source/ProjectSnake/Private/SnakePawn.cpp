@@ -45,6 +45,11 @@ void ASnakePawn::BeginPlay()
 	// Runtime intialization, adding input mapping contexts, reference that depend on having a world
 	Super::BeginPlay();
 	
+	Grid = FSnakeGrid(GridWidth, GridHeight);
+	
+	FIntPoint HeadCell = WorldToGrid(GetActorLocation());
+	Grid.SetCell(HeadCell, ESnakeCellType::Snake);
+	
 	//Initializing snake body
 	SetupSegmentPositions();
 	
@@ -86,6 +91,14 @@ void ASnakePawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Clear and rebuild snake cells each tick
+    Grid.Clear();
+    Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
+    for (ASnakeSegment* Seg : Segments)
+    {
+        Grid.SetCell(WorldToGrid(Seg->GetActorLocation()), ESnakeCellType::Snake);
+    }
+	
     // Save head position to history
     PositionHistory.Insert(GetActorLocation(), 0);
 	
@@ -234,4 +247,40 @@ UMaterialInstance* ASnakePawn::GetNextMaterial()
 
     LastMaterialIndex = Index;
     return WatercolorMaterials[Index];
+}
+
+// Take the world space and make it into a grid 
+FIntPoint ASnakePawn::WorldToGrid(FVector WorldPos) const
+{
+    return FIntPoint(
+        FMath::FloorToInt(WorldPos.X / CellSize),
+        FMath::FloorToInt(WorldPos.Y / CellSize)
+    );
+}
+
+// Multiply back so every cell centers inside the cell (otherwise it will snap to the corner)
+FVector ASnakePawn::GridToWorld(FIntPoint GridPos) const
+{
+    return FVector(
+        GridPos.X * CellSize + CellSize * 0.5f,
+        GridPos.Y * CellSize + CellSize * 0.5f,
+        GetActorLocation().Z
+    );
+}
+
+FVector ASnakePawn::GetRandomEmptyCell() const
+{
+    TArray<FIntPoint> EmptyCells;
+    for (int32 Y = 0; Y < GridHeight; Y++)
+        for (int32 X = 0; X < GridWidth; X++)
+        {
+            FIntPoint Pos(X, Y);
+            if (Grid.GetCell(Pos) == ESnakeCellType::Empty)
+                EmptyCells.Add(Pos);
+        }
+
+    if (EmptyCells.IsEmpty()) return FVector::ZeroVector;
+    
+    FIntPoint Chosen = EmptyCells[FMath::RandRange(0, EmptyCells.Num() - 1)];
+    return GridToWorld(Chosen);
 }

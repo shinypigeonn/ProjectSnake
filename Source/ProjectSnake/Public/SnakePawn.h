@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "SnakeSegment.h"
 #include "SnakeHUD.h"          
+#include "SnakeGrid.h"
 #include "SnakePawn.generated.h" 
 
 class UStaticMeshComponent;
@@ -14,6 +15,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+
+FSnakeGrid Grid;
 
 UCLASS() // Tells Unreal this class participates in the reflection/object system
 class PROJECTSNAKE_API ASnakePawn : public APawn
@@ -81,6 +84,21 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
     TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
+	
+	// ----------------------- GRID --------------------------------
+	UPROPERTY(EditAnywhere, Category="Grid")
+	int32 GridWidth = 20;
+
+	UPROPERTY(EditAnywhere, Category="Grid")
+	int32 GridHeight = 20;
+	
+	UPROPERTY(EditAnywhere, Category="Grid")
+	float CellSize = 100.0f;
+	
+	FIntPoint WorldToGrid(FVector WorldPos) const;
+	FVector GridToWorld(FIntPoint GridPos) const;
+	FVector GetRandomEmptyCell() const;
+	
 #pragma endregion
 	
 #pragma region HUDPROPERTIES
