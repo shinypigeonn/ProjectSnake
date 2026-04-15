@@ -16,8 +16,6 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 
-FSnakeGrid Grid;
-
 UCLASS() // Tells Unreal this class participates in the reflection/object system
 class PROJECTSNAKE_API ASnakePawn : public APawn
 {
@@ -35,7 +33,8 @@ protected:
 	void Turn(const FInputActionValue& Value);
 	
 #pragma region SNAKEPROPERTIES
-	// ----------------- SNAKE PAWN PROPERTIES --------------------------
+	// -------------------- SNAKE PAWN PROPERTIES -----------------------------------
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
 
@@ -56,6 +55,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	TObjectPtr<UInputAction> TurnAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	TObjectPtr<UInputAction> BoostAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float MoveSpeed = 300.0f;
@@ -63,7 +65,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float TurnSpeed = 200.0f;
 	
-	// ---------------- SNAKE SEGMENT PROPERTIES  ----------------------
+	// --------------------- SNAKE SEGMENT PROPERTIES ---------------------------------
+	
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
 	TSubclassOf<ASnakeSegment> SegmentClass;
 
@@ -85,7 +88,54 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
     TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
 	
-	// ----------------------- GRID --------------------------------
+	// ---------------------- SNAKE POWERS ---------------------------------------------
+	
+	// Active power state
+	bool bIsInvisible = false;
+	float ActiveSpeedMultiplier = 1.0f;
+	
+	// Timer for power duration
+	FTimerHandle InvisibilityTimer;
+	FTimerHandle SpeedBoostTimer;
+	
+	// Power appliers
+	void ApplySpeedBoost(float Multiplier, float Duration);
+	void ApplyInvisibility(float Duration);
+
+	// Power removers
+	void RemoveSpeedBoost();
+	void RemoveInvisibility();
+	
+	// --------------------- SNAKE BOOST ---------------------------------------------
+	
+	bool bWantsToBoost = false; // boost input
+	
+	// Boost bar (0.0 = empty, 1.0 = full)
+	UPROPERTY(EditDefaultsOnly, Category="Boost")
+	float BoostCharge = 1.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Boost")
+	float BoostDrainRate = 0.2f; // Per second while boosting
+	
+	UPROPERTY(EditDefaultsOnly, Category="Boost")
+	float BoostRefillRate = 0.1f; // Per second while not boosting
+	
+	UPROPERTY(EditDefaultsOnly, Category="Boost")
+	float BoostSpeedMultiplier = 1.8f; // How fast during boost
+	
+	bool bUnlimitedBoost = false; // Speed boost for food type
+	FTimerHandle UnlimitedBoostTimer; // Speed boost timer
+	
+	UFUNCTION(BlueprintCallable)
+	float GetBoostCharge() const { return BoostCharge; }
+	
+	UFUNCTION(BlueprintCallable)
+	bool isUnlimitedBoost() const { return bUnlimitedBoost;	}
+	
+	// ----------------------- GRID -----------------------------------------------------
+	
+	FSnakeGrid Grid;
+	
 	UPROPERTY(EditAnywhere, Category="Grid")
 	int32 GridWidth = 20;
 
@@ -98,20 +148,23 @@ protected:
 	FIntPoint WorldToGrid(FVector WorldPos) const;
 	FVector GridToWorld(FIntPoint GridPos) const;
 	FVector GetRandomEmptyCell() const;
-	
+	// ----------------------------------------------------------------------------------------
 #pragma endregion
 	
 #pragma region HUDPROPERTIES
-	// ----------------------- HUD ---------------------------------
+	// ----------------------- HUD --------------------------------------------------------
+	
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
+	
 	UPROPERTY()
 	USnakeHUD* HUDWidget;
 	
-	void UpdateHUDScore();
+	void UpdateHUDScore() const;
 	
 	int32 Score = 0;
-	//---------------------------------------------------------------
+	
+	//----------------------------------------------------------------------------------------
 #pragma endregion
 	
 	// Hit event for food overlap
@@ -127,6 +180,9 @@ protected:
 	
 	void AddSegment();
 	void SetupSegmentPositions();
+	
+	void OnBoostPressed();
+	void OnBoostReleased();
 
 public:	
 	// Called every frame
