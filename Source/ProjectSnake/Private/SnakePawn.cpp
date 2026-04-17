@@ -47,6 +47,18 @@ void ASnakePawn::BeginPlay()
 	
 	Grid = FSnakeGrid(GridWidth, GridHeight);
 	
+	// Mark border cells as walls
+	for (int32 X = 0; X < GridWidth; X++)
+	{
+		for (int32 Y = 0; Y < GridHeight; Y++)
+		{
+			bool bIsBorder = X == 0 || X == GridWidth - 1
+                      || Y == 0 || Y == GridHeight - 1;
+			if (bIsBorder)
+            Grid.SetCell(FIntPoint(X, Y), ESnakeCellType::Wall);
+		}
+	}
+	
 	FIntPoint HeadCell = WorldToGrid(GetActorLocation());
 	Grid.SetCell(HeadCell, ESnakeCellType::Snake);
 	

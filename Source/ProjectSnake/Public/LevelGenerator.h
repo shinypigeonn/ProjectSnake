@@ -1,0 +1,35 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "LevelGenerator.generated.h"
+
+UCLASS()
+class PROJECTSNAKE_API ALevelGenerator : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	ALevelGenerator();
+
+protected:
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	TSubclassOf<AWallActor> WallClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	int32 GridWidth = 20;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	int32 GridHeight = 20;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	float CellSize = 100.0f;
+
+public:	
+	void GenerateWalls();
+	FVector GridToWorld(FIntPoint GridPos) const;
+};
