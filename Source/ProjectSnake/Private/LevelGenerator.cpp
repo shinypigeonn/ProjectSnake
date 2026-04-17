@@ -3,7 +3,6 @@
 
 #include "LevelGenerator.h"
 #include "WallActor.h"
-#include "Components/SplineMeshComponent.h"
 
 // Sets default values
 ALevelGenerator::ALevelGenerator()
@@ -27,7 +26,7 @@ FVector ALevelGenerator::GridToWorld(FIntPoint GridPos) const
         );
 }
 
-void ALevelGenerator::GenerateWalls()
+void ALevelGenerator::GenerateWalls() const
 {
 	if (!WallClass) return;
 	

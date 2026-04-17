@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "LevelGenerator.generated.h"
 
+class AWallActor;
+class ASnakePawn;
+
 UCLASS()
 class PROJECTSNAKE_API ALevelGenerator : public AActor
 {
@@ -30,6 +33,6 @@ protected:
 	float CellSize = 100.0f;
 
 public:	
-	void GenerateWalls();
+	void GenerateWalls() const;
 	FVector GridToWorld(FIntPoint GridPos) const;
 };
