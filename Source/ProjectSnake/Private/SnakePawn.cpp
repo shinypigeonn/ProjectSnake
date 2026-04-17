@@ -89,6 +89,10 @@ void ASnakePawn::BeginPlay()
 // Called every frame
 void ASnakePawn::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
+	
+	// ------------------------------------ Boost logic ------------------------------------------------------
+	
 	bool bIsBoosting = false;
 	
 	if (bUnlimitedBoost)
@@ -99,47 +103,52 @@ void ASnakePawn::Tick(float DeltaTime)
 	else if (bWantsToBoost && BoostCharge > 0.0f)
 	{
 		bIsBoosting = true;
-		BoostCharge -= FMath::Clamp(BoostDrainRate * DeltaTime, 0.0f, 1.0f);
+		BoostCharge = FMath::Clamp(BoostCharge - BoostDrainRate * DeltaTime, 0.0f, 1.0f);
 	}
 	else
 	{
 		BoostCharge = FMath::Clamp(BoostCharge + BoostRefillRate * DeltaTime, 0.0f, 1.0f);
 	}
 	
-	float CurrentSpeed = MoveSpeed * (bIsBoosting ? BoostSpeedMultiplier : 1.0f);
-	const FVector Delta = GetActorForwardVector() * MoveSpeed * ActiveSpeedMultiplier * DeltaTime;
+	float CurrentSpeed = MoveSpeed * ActiveSpeedMultiplier * (bIsBoosting ? BoostSpeedMultiplier : 1.0f);
+	const FVector Delta = GetActorForwardVector() * CurrentSpeed * DeltaTime;
 	AddActorWorldOffset(Delta, true);
-		
-	Super::Tick(DeltaTime);
+	
+	// Update boost hud
+	UpdateHUDBoost();
 
+	// ------------------------------------ Position history & segments -----------------------------------------
+	
+	PositionHistory.Insert(GetActorLocation(), 0);    // Save head position to history
+	
+	for (int32 i = 0; i < Segments.Num(); i++)					   // Move each segment to its position in history
+	{
+		int32 HistoryIndex = (i + 1) * SegmentSpacing;
+		if (PositionHistory.IsValidIndex(HistoryIndex))
+		{
+			Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
+		}
+	}
+
+	if (!FMath::IsNearlyZero(TurnInput))
+	{
+		AddActorLocalRotation(FRotator(0.0f, TurnInput * TurnSpeed * DeltaTime, 0.0f));
+	}	
+
+	// ------------------------------------ Update grid --------------------------------------------------------
+	
 	// Clear and rebuild snake cells each tick
-    Grid.Clear();
-    Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
-    for (ASnakeSegment* Seg : Segments)
-    {
-        Grid.SetCell(WorldToGrid(Seg->GetActorLocation()), ESnakeCellType::Snake);
-    }
-	
-    // Save head position to history
-    PositionHistory.Insert(GetActorLocation(), 0);
-	
-    // Move each segment to its position in history
-    for (int32 i = 0; i < Segments.Num(); i++)
-    {
-        int32 HistoryIndex = (i + 1) * SegmentSpacing;
-        if (PositionHistory.IsValidIndex(HistoryIndex))
-        {
-            Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
-        }
-    }
-
-    if (!FMath::IsNearlyZero(TurnInput))
-    {
-        AddActorLocalRotation(FRotator(0.0f, TurnInput * TurnSpeed * DeltaTime, 0.0f));
-    }
+	Grid.Clear(); 
+	Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
+	for (ASnakeSegment* Seg : Segments)
+	{
+		Grid.SetCell(WorldToGrid(Seg->GetActorLocation()), ESnakeCellType::Snake);
+	}
 }
+
 #pragma region INPUT
-// -------------------------- INPUT -----------------------------------------------------------
+// -------------------------------------------- INPUT -----------------------------------------------------------
+
 // Called to bind functionality to input
 void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -249,7 +258,7 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 		switch (Data.FoodType)
 		{
 			case EFoodType::SpeedBoost:
-			ApplySpeedBoost(Data.SpeedMultiplier, Data.BenefitDuration);
+			ApplyUnlimitedBoost(Data.BenefitDuration); 
 			break;
 			
 		case EFoodType::Golden:
@@ -289,6 +298,13 @@ void ASnakePawn::UpdateHUDScore() const
     }
 }
 
+void ASnakePawn::UpdateHUDBoost() const
+{
+    if (HUDWidget)
+    {
+        HUDWidget->UpdateBoost(BoostCharge, bUnlimitedBoost);
+    }
+}
 UMaterialInstance* ASnakePawn::GetNextMaterial()
 {
     if (WatercolorMaterials.IsEmpty()) return nullptr;
@@ -382,6 +398,21 @@ void ASnakePawn::ApplyInvisibility(float Duration)
 void ASnakePawn::RemoveInvisibility()
 {
     bIsInvisible = false;
+}
+
+void ASnakePawn::ApplyUnlimitedBoost(float Duration)
+{
+    GetWorldTimerManager().ClearTimer(UnlimitedBoostTimer);
+    bUnlimitedBoost = true;
+    GetWorldTimerManager().SetTimer(
+        UnlimitedBoostTimer, this,
+        &ASnakePawn::RemoveUnlimitedBoost,
+        Duration, false);
+}
+
+void ASnakePawn::RemoveUnlimitedBoost()
+{
+    bUnlimitedBoost = false;
 }
 
 #pragma endregion

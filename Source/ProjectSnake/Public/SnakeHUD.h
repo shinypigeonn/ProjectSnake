@@ -18,4 +18,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="HUD")
 	void UpdateScore(int32 NewScore);
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateBoost(float Charge, bool bIsUnlimited);
+
 };

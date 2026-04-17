@@ -8,6 +8,7 @@ enum class ESnakeCellType : uint8
     Empty   UMETA(DisplayName = "Empty"),
     Snake   UMETA(DisplayName = "Snake"),
     Food    UMETA(DisplayName = "Food"),
+    Wall    UMETA(DisplayName = "Wall")
 };
 
 struct FSnakeGrid

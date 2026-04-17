@@ -130,7 +130,10 @@ protected:
 	float GetBoostCharge() const { return BoostCharge; }
 	
 	UFUNCTION(BlueprintCallable)
-	bool isUnlimitedBoost() const { return bUnlimitedBoost;	}
+	bool IsUnlimitedBoost() const { return bUnlimitedBoost;	}
+	
+	void ApplyUnlimitedBoost(float Duration);
+	void RemoveUnlimitedBoost();
 	
 	// ----------------------- GRID -----------------------------------------------------
 	
@@ -157,7 +160,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 	
-	UPROPERTY()
 	USnakeHUD* HUDWidget;
 	
 	void UpdateHUDScore() const;
@@ -183,6 +185,8 @@ protected:
 	
 	void OnBoostPressed();
 	void OnBoostReleased();
+	
+	void UpdateHUDBoost() const; 
 
 public:	
 	// Called every frame
