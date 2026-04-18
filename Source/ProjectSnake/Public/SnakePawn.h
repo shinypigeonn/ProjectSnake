@@ -29,8 +29,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// ------------ INPUT ----------------------
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
+	void OnBoostPressed();
+	void OnBoostReleased();
 	
 #pragma region SNAKEPROPERTIES
 	// -------------------- SNAKE PAWN PROPERTIES -----------------------------------
@@ -182,10 +185,6 @@ protected:
 	
 	void AddSegment();
 	void SetupSegmentPositions();
-	
-	void OnBoostPressed();
-	void OnBoostReleased();
-	
 	void UpdateHUDBoost() const; 
 
 public:	

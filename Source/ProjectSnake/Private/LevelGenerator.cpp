@@ -28,26 +28,36 @@ FVector ALevelGenerator::GridToWorld(FIntPoint GridPos) const
 
 void ALevelGenerator::GenerateWalls() const
 {
-	if (!WallClass) return;
+	if (!WallClassA || WallClassB) return;
 	
 	for (int32 X = 0; X < GridWidth; X++)
 	{
 		for (int32 Y = 0; Y < GridHeight; Y++)
 		{
-			bool bIsBorder = X == 0 || X == GridWidth - 1 
+			bool const bIsBorder = X == 0 || X == GridWidth - 1 
 			|| Y == 0 || Y == GridHeight - 1;
-         		
-			if (!bIsBorder) continue;
-         		
+			
+			bool const bIsEven = (X + Y) % 2 == 0;
+			
 			FVector Location = GridToWorld(FIntPoint(X, Y));
-         		
 			FActorSpawnParameters Params;
-			Params.SpawnCollisionHandlingOverride = 
+			Params.SpawnCollisionHandlingOverride =
 				ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
          		
-			AWallActor* Wall = GetWorld()->SpawnActor<AWallActor>
-			(WallClass, Location, FRotator::ZeroRotator, Params);
-			
+			if (bIsBorder)
+			{
+				// Spawn wall tile
+				TSubclassOf<AWallActor> TileClass = bIsEven ? WallClassA : WallClassB;
+				GetWorld()->SpawnActor<AWallActor>(
+					TileClass, Location, FRotator::ZeroRotator, Params);
+			}
+			else if (FloorClassA && FloorClassB)
+			{
+				// Spawn floor tile so grid is visible
+				TSubclassOf<AWallActor> TileClass = bIsEven ? FloorClassA : FloorClassB;
+				GetWorld()->SpawnActor<AWallActor>(
+					TileClass, Location, FRotator::ZeroRotator, Params);
+			}
 		}
 	}
 }

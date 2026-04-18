@@ -20,9 +20,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
+	// Wall tiles in grid 
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	TSubclassOf<AWallActor> WallClass;
+	TSubclassOf<AWallActor> WallClassA;
 	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	TSubclassOf<AWallActor> WallClassB;
+	
+	// Spawning floor tiles so the grid is visible
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	TSubclassOf<AWallActor> FloorClassA;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Level")
+	TSubclassOf<AWallActor> FloorClassB;
+	
+	// Grid properties
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	int32 GridWidth = 20;
 	
@@ -31,6 +43,7 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	float CellSize = 100.0f;
+
 
 public:	
 	void GenerateWalls() const;
