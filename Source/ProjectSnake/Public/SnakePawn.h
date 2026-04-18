@@ -29,7 +29,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// ------------ INPUT ----------------------
+	// ------------ INPUT ------------------
+	
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	void OnBoostPressed();
@@ -185,7 +186,11 @@ protected:
 	
 	void AddSegment();
 	void SetupSegmentPositions();
-	void UpdateHUDBoost() const; 
+	void UpdateHUDBoost() ; 
+	void UpdateMovement(float DeltaTime);
+	void UpdateBoostState(float DeltaTime);
+	void UpdateSegments();
+	void UpdateGrid();
 
 public:	
 	// Called every frame
