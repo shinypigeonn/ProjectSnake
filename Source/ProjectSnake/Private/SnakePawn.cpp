@@ -46,60 +46,13 @@ ASnakePawn::ASnakePawn()
 // Called when the game starts or when spawned
 void ASnakePawn::BeginPlay()
 {
-	// Runtime intialization, adding input mapping contexts, reference that depend on having a world
+	// Runtime initialization, adding input mapping contexts, reference that depend on having a world
 	Super::BeginPlay();
 	
-	Grid = FSnakeGrid(GridWidth, GridHeight);
-	
-	// Mark border cells as walls
-	for (int32 X = 0; X < GridWidth; X++)
-	{
-		for (int32 Y = 0; Y < GridHeight; Y++)
-		{
-			bool bIsBorder = X == 0 || X == GridWidth - 1
-                      || Y == 0 || Y == GridHeight - 1;
-			if (bIsBorder)
-            Grid.SetCell(FIntPoint(X, Y), ESnakeCellType::Wall);
-		}
-	}
-	
-	FIntPoint HeadCell = WorldToGrid(GetActorLocation());
-	Grid.SetCell(HeadCell, ESnakeCellType::Snake);
-	
-	//Initializing snake body
-	SetupSegmentPositions();
-	
-	// Event trigger for food collection
-	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASnakePawn::OnOverlapBegin);
-	
-	// Event trigger for collision (walls)
-	CollisionComponent->OnComponentHit.AddDynamic(this, &ASnakePawn::OnHit);
-
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		if (ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
-		{
-			if (UEnhancedInputLocalPlayerSubsystem* InputLocalPlayerSubsystem =
-				LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-			{
-				if (InputMappingContext)
-				{
-					InputLocalPlayerSubsystem->AddMappingContext(InputMappingContext, 0);
-				}
-			}
-		}
-	}
-	
-	// Spawn and display the HUD
-	if (HUDWidgetClass)
-	{
-		HUDWidget = CreateWidget<USnakeHUD>(GetWorld(), HUDWidgetClass);
-		if (HUDWidget)
-		{
-			HUDWidget->AddToViewport();
-			HUDWidget->UpdateScore(0); // Show "Score: 0" at start
-		}
-	}
+	InitGrid();
+	InitSnake();
+	InitInput();
+	InitHUD();
 }
 
 // Called every frame
@@ -274,7 +227,9 @@ void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 // --------------------------------------------------------------------------------------------------------
 // HELPER FUNCTIONS 
 // --------------------------------------------------------------------------------------------------------
-#pragma region HELPERS || Movement, Boost, Segments, Grid, Hud, Material
+#pragma region HELPERS || Initialization, Movement, Boost, Segments, Grid, Hud, Material
+
+// --- Tick helpers ---
 void ASnakePawn::UpdateBoostState(float DeltaTime)
 {
 	if (bUnlimitedBoost)
@@ -337,7 +292,7 @@ void ASnakePawn::UpdateHUDScore() const
     }
 }
 
-void ASnakePawn::UpdateHUDBoost()
+void ASnakePawn::UpdateHUDBoost() const
 {
     if (HUDWidget)
     {
@@ -359,11 +314,57 @@ UMaterialInstance* ASnakePawn::GetNextMaterial()
 	LastMaterialIndex = Index;
 	return WatercolorMaterials[Index];
 }
+
+// --- Initialization ---
+void ASnakePawn::InitGrid()
+{
+	Grid = FSnakeGrid(GridWidth, GridHeight);
+	
+	// Mark border cells as walls
+	for (int32 X = 0; X < GridWidth; X++)
+	{
+		for (int32 Y = 0; Y < GridHeight; Y++)
+		{
+			bool bIsBorder = X == 0 || X == GridWidth - 1
+					  || Y == 0 || Y == GridHeight - 1;
+			if (bIsBorder)
+				Grid.SetCell(FIntPoint(X, Y), ESnakeCellType::Wall);
+		}
+	}
+	Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
+}
+void ASnakePawn::InitSnake()
+{    
+	SetupSegmentPositions();
+	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASnakePawn::OnOverlapBegin);
+	CollisionComponent->OnComponentHit.AddDynamic(this, &ASnakePawn::OnHit);
+}
+void ASnakePawn::InitInput() const
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		if (ULocalPlayer* LP = PC->GetLocalPlayer())
+			if (auto* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+				if (InputMappingContext)
+					Subsystem->AddMappingContext(InputMappingContext, 0);
+	
+}
+void ASnakePawn::InitHUD()
+{
+	if (!HUDWidgetClass) return;
+
+	HUDWidget = CreateWidget<USnakeHUD>(GetWorld(), HUDWidgetClass);
+	if (HUDWidget)
+	{
+		HUDWidget->AddToViewport();
+		HUDWidget->UpdateScore(0);
+	}
+}
+
 #pragma endregion
 
 
 // --------------------------------------------------------------------------------------------------------
-// HELPER FUNCTIONS 
+// GRID 
 // --------------------------------------------------------------------------------------------------------
 #pragma region GRID
 // Take the world space and make it into a grid 

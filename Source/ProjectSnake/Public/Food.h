@@ -44,7 +44,7 @@ protected:
 	
 	// How long this food stays spawned before disappearing (0 = no limit)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
-	float TimeLimit = 1.0f;
+	float TimeLimit = 10.0f;
 
 private:
 	// Tracks how long this food has been alive

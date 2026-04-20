@@ -184,13 +184,21 @@ protected:
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
-	void AddSegment();
-	void SetupSegmentPositions();
-	void UpdateHUDBoost() ; 
+	void AddSegment(); // Adding snake segment for food collection
+	void SetupSegmentPositions(); // First additional segments (body of snake)
+	
+	// --- Tick Helpers ---	
+	void UpdateBoostState(float DeltaTime);	
 	void UpdateMovement(float DeltaTime);
-	void UpdateBoostState(float DeltaTime);
-	void UpdateSegments();
+	void UpdateSegments();	
 	void UpdateGrid();
+	void UpdateHUDBoost() const;
+	
+	// --- Initialization ---
+	void InitGrid();
+	void InitSnake();
+	void InitInput() const;
+	void InitHUD();
 
 public:	
 	// Called every frame

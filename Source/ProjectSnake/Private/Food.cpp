@@ -25,11 +25,12 @@ void AFood::BeginPlay()
 void AFood::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	// TODO: Food timer for only Golden? 
 	
 	// If timelimit is bigger than 0 = count to the time
 	// limit, then if time elapse is greater/equal to time limit, 
 	// then destory food actor
-	
+	// if food is SpeedBoost OR Golden then do timer, other fruits will not have time limit
 	/*if (TimeLimit > 0.0f)
 	{
 		TimeElapsed += DeltaTime;

@@ -27,7 +27,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	TSubclassOf<AWallActor> WallClassB;
 	
-	// Spawning floor tiles so the grid is visible
+	// Floor tiles so the grid is visible
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	TSubclassOf<AWallActor> FloorClassA;
 	
