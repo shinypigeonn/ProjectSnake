@@ -28,7 +28,8 @@ FVector ALevelGenerator::GridToWorld(FIntPoint GridPos) const
 
 void ALevelGenerator::GenerateWalls() const
 {
-	if (!WallClassA || WallClassB) return;
+	
+	if (!WallClassA || !WallClassB) return;
 	
 	for (int32 X = 0; X < GridWidth; X++)
 	{

@@ -10,7 +10,7 @@ ASnakeGameMode::ASnakeGameMode()
 void ASnakeGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	Grid = FSnakeGrid(50, 20);
+	Grid = FSnakeGrid(40, 40);
 	SpawnTiles();
 	SetGameState(EGameState::Playing);
 }

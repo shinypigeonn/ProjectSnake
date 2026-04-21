@@ -36,10 +36,10 @@ protected:
 	
 	// Grid properties
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	int32 GridWidth = 20;
+	int32 GridWidth = 30;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	int32 GridHeight = 20;
+	int32 GridHeight = 30;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	float CellSize = 100.0f;

@@ -61,7 +61,7 @@ struct FFoodData
         Data.FoodType = EFoodType::SpeedBoost;
         Data.PointValue = 30;
         Data.SpeedMultiplier = 1.5f;
-        Data.BenefitDuration = 0.0f;
+        Data.BenefitDuration = 5.0f;
         Data.bGrantsInvisibility = false;
         return Data;
     }
@@ -72,7 +72,7 @@ struct FFoodData
         Data.FoodType = EFoodType::Golden;
         Data.PointValue = 100;
         Data.SpeedMultiplier = 1.0f;
-        Data.BenefitDuration = 0.0f;
+        Data.BenefitDuration = 10.0f;
         Data.bGrantsInvisibility = true;
         return Data;
     }
