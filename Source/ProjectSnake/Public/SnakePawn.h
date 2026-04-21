@@ -9,12 +9,14 @@
 #include "SnakeGrid.h"
 #include "SnakePawn.generated.h" 
 
+class UUserWidget;
 class UStaticMeshComponent;
 class USphereComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UGridMapHUD;
 
 UCLASS() // Tells Unreal this class participates in the reflection/object system
 class PROJECTSNAKE_API ASnakePawn : public APawn
@@ -164,12 +166,34 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 	
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UGridMapHUD> GridMapWidgetClass;
+
+	/**
+	 * A pointer to the USnakeHUD instance that is used to display and manage
+	 * the game's HUD (Heads-Up Display) elements for the Snake Pawn.
+	 *
+	 * This widget is responsible for showing gameplay information such as
+	 * score, boost charge, and other HUD-related data during runtime.
+	 *
+	 * The HUDWidget is initialized in the InitHUD() function of ASnakePawn
+	 * and linked to the corresponding UMG Blueprint class set as HUDWidgetClass.
+	 *
+	 * It is updated dynamically during gameplay via functions like UpdateHUDScore()
+	 * and UpdateHUDBoost() to reflect real-time changes in game state.
+	 *
+	 * @see ASnakePawn::InitHUD()
+	 * @see ASnakePawn::UpdateHUDScore()
+	 * @see ASnakePawn::UpdateHUDBoost()
+	 */
 	USnakeHUD* HUDWidget;
+	UGridMapHUD* GridMapWidget;
 	
 	void UpdateHUDScore() const;
+	void UpdateGridMap();
 	
 	int32 Score = 0;
-	
+		
 	//----------------------------------------------------------------------------------------
 #pragma endregion
 	

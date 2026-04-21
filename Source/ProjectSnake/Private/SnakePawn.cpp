@@ -9,6 +9,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Food.h"
+#include "GridMapHUD.h"
+#include "Rendering/DrawElements.h"
 #include "SnakeGameMode.h"
 
 // Sets default values
@@ -65,6 +67,7 @@ void ASnakePawn::Tick(float DeltaTime)
 	UpdateHUDBoost();
 	UpdateSegments();
 	UpdateGrid();
+	UpdateGridMap();
 }
 
 // --------------------------------------------------------------------------------------------------------
@@ -299,6 +302,14 @@ void ASnakePawn::UpdateHUDBoost() const
     }
 }
 
+void ASnakePawn::UpdateGridMap()
+{
+	if (GridMapWidget)
+	{
+		GridMapWidget->SetGridData(GridWidth, GridHeight, Grid.Cells);
+	}
+}
+
 UMaterialInstance* ASnakePawn::GetNextMaterial()
 {
 	if (WatercolorMaterials.IsEmpty()) return nullptr;
@@ -315,6 +326,7 @@ UMaterialInstance* ASnakePawn::GetNextMaterial()
 }
 
 // --- Initialization ---
+
 void ASnakePawn::InitGrid()
 {
 	Grid = FSnakeGrid(GridWidth, GridHeight);
@@ -356,6 +368,17 @@ void ASnakePawn::InitHUD()
 	{
 		HUDWidget->AddToViewport();
 		HUDWidget->UpdateScore(0);
+	}
+	
+	// After creating HUDWidget, also create the map widget
+	if (GridMapWidgetClass)
+	{
+	    GridMapWidget = CreateWidget<UGridMapHUD>(GetWorld(), GridMapWidgetClass);
+	    if (GridMapWidget)
+	    {
+	        GridMapWidget->AddToViewport();
+	        GridMapWidget->SetGridData(GridWidth, GridHeight, Grid.Cells);
+	    }
 	}
 }
 
