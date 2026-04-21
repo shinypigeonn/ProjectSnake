@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FloorActor.h"
 #include "GameFramework/Actor.h"
 #include "LevelGenerator.generated.h"
 
@@ -29,17 +30,17 @@ protected:
 	
 	// Floor tiles so the grid is visible
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	TSubclassOf<AWallActor> FloorClassA;
+	TSubclassOf<AFloorActor> FloorClassA;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	TSubclassOf<AWallActor> FloorClassB;
+	TSubclassOf<AFloorActor> FloorClassB;
 	
 	// Grid properties
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	int32 GridWidth = 30;
+	int32 GridWidth = 50;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
-	int32 GridHeight = 30;
+	int32 GridHeight = 50;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Level")
 	float CellSize = 100.0f;

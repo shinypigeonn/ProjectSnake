@@ -49,15 +49,29 @@ void ALevelGenerator::GenerateWalls() const
 			{
 				// Spawn wall tile
 				TSubclassOf<AWallActor> TileClass = bIsEven ? WallClassA : WallClassB;
-				GetWorld()->SpawnActor<AWallActor>(
+				AWallActor* Wall = GetWorld()->SpawnActor<AWallActor>(
 					TileClass, Location, FRotator::ZeroRotator, Params);
+
+				 if (Wall)
+				 {
+				 	float TileScale = CellSize / 100.0f;
+					Wall->SetActorScale3D(FVector(TileScale, TileScale, 1.0f));
+				 }
 			}
 			else if (FloorClassA && FloorClassB)
 			{
 				// Spawn floor tile so grid is visible
-				TSubclassOf<AWallActor> TileClass = bIsEven ? FloorClassA : FloorClassB;
-				GetWorld()->SpawnActor<AWallActor>(
-					TileClass, Location, FRotator::ZeroRotator, Params);
+			    TSubclassOf<AFloorActor> TileClass = bIsEven ? FloorClassA : FloorClassB;
+			    AFloorActor* Floor = GetWorld()->SpawnActor<AFloorActor>(
+			        TileClass, Location, FRotator::ZeroRotator, Params);
+
+			    if (Floor)
+			    {
+				    // Plane mesh is 200x200 at scale 1.0
+			    	// So scale = CellSize / 200
+			    	float TileScale = CellSize / 100.0f;
+			    	Floor->SetActorScale3D(FVector(TileScale, TileScale, 0.2f));
+			    }
 			}
 		}
 	}

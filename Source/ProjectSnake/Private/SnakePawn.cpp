@@ -116,27 +116,23 @@ void ASnakePawn::OnBoostReleased()
 #pragma region SEGMENTS || Snake position & segments
 void ASnakePawn::SetupSegmentPositions()
 {
-    // 1. Pre-fill position history with positions behind the head
-    //    so segment placement has valid indices from the start.
     const FVector HeadLocation = GetActorLocation();
     const FVector BackwardDir = -GetActorForwardVector();
 
-    // We need at least (InitialSegments * SegmentSpacing) entries in history
+    // Fill enough history for all initial segments
     int32 RequiredHistory = (InitialSegments + 1) * SegmentSpacing;
     PositionHistory.Empty();
     PositionHistory.Reserve(RequiredHistory);
 
     for (int32 i = 0; i < RequiredHistory; i++)
     {
-        // Each slot is 1 unit apart; segments sample every SegmentSpacing slots
         PositionHistory.Add(HeadLocation + BackwardDir * i);
     }
 
-    // 2. Spawn segments and place them at their correct history offset
+    // Spawn segments and place them at correct history offsets
     for (int32 i = 0; i < InitialSegments; i++)
     {
-        AddSegment(); // spawns and appends to Segments[]
-
+        AddSegment();
         int32 HistoryIndex = (i + 1) * SegmentSpacing;
         Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
     }
@@ -146,8 +142,10 @@ void ASnakePawn::AddSegment()
 {
     if (!SegmentClass) return;
 
-    FVector SpawnLocation = PositionHistory.IsValidIndex(Segments.Num() + 1 * SegmentSpacing)
-        ? PositionHistory[Segments.Num() * SegmentSpacing]
+    // Correct precedence — (Segments.Num() + 1) * SegmentSpacing
+    int32 HistoryIndex = (Segments.Num() + 1) * SegmentSpacing;
+    FVector SpawnLocation = PositionHistory.IsValidIndex(HistoryIndex)
+        ? PositionHistory[HistoryIndex]
         : GetActorLocation();
 
     ASnakeSegment* NewSegment = GetWorld()->SpawnActor<ASnakeSegment>(
@@ -155,13 +153,9 @@ void ASnakePawn::AddSegment()
 
     if (NewSegment)
     {
-    	AActor* AttachTarget = Segments.Num() > 0
-        ? Cast<AActor>(Segments.Last())  // Last segment (before adding new one)
-        : Cast<AActor>(this);            // Parent (the snake head)
-    	
-    	NewSegment->AttachToActor(AttachTarget, FAttachmentTransformRules::KeepWorldTransform);
-    	Segments.Add(NewSegment);
-    	NewSegment->SetMaterial(GetNextMaterial());
+        // No AttachToActor — segments follow PositionHistory only
+        Segments.Add(NewSegment);
+        NewSegment->SetMaterial(GetNextMaterial());
     }
 }
 
@@ -262,16 +256,21 @@ void ASnakePawn::UpdateMovement(float DeltaTime)
 
 void ASnakePawn::UpdateSegments() 
 {
-	PositionHistory.Insert(GetActorLocation(), 0);    // Save head position to history
-	
-	for (int32 i = 0; i < Segments.Num(); i++)					 // Move each segment to its position in history
-	{
-		int32 HistoryIndex = (i + 1) * SegmentSpacing;
-		if (PositionHistory.IsValidIndex(HistoryIndex))
-		{
-			Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
-		}
-	}
+    PositionHistory.Insert(GetActorLocation(), 0); // Save head position to history
+
+    // Trim history to only what's needed — prevents infinite memory growth
+    int32 MaxHistory = (Segments.Num() + 1) * SegmentSpacing + 1;
+    if (PositionHistory.Num() > MaxHistory)
+        PositionHistory.SetNum(MaxHistory);
+
+    for (int32 i = 0; i < Segments.Num(); i++) // Move each segment to its position in history
+    {
+        int32 HistoryIndex = (i + 1) * SegmentSpacing;
+        if (PositionHistory.IsValidIndex(HistoryIndex))
+        {
+            Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
+        }
+    }
 }
 
 void ASnakePawn::UpdateGrid()
