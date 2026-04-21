@@ -10,7 +10,6 @@
 #include "EnhancedInputComponent.h"
 #include "Food.h"
 #include "GridMapHUD.h"
-#include "Rendering/DrawElements.h"
 #include "SnakeGameMode.h"
 
 // Sets default values
