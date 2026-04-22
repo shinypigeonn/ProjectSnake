@@ -10,6 +10,7 @@ AWallActor::AWallActor()
 	RootComponent = WallMesh;
 	
 	WallMesh->SetCollisionProfileName(TEXT("BlockAll"));
+	WallMesh->SetNotifyRigidBodyCollision(true); // Required — fires OnHit when snake sweeps into wall
 	
 	// Tagging it via code so OnHit can identify it (before I tagged it in the blueprint)
 	Tags.Add(TEXT("Wall"));

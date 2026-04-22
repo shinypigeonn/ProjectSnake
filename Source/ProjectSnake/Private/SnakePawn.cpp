@@ -9,7 +9,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Food.h"
-#include "GridMapHUD.h"
 #include "SnakeGameMode.h"
 
 // Sets default values
@@ -66,12 +65,11 @@ void ASnakePawn::Tick(float DeltaTime)
 	UpdateHUDBoost();
 	UpdateSegments();
 	UpdateGrid();
-	UpdateGridMap();
 }
 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 // INPUT
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region INPUT 
 
 // Called to bind functionality to input
@@ -112,9 +110,9 @@ void ASnakePawn::OnBoostReleased()
 #pragma endregion
 
 
-// --------------------------------------------------------------------------------------------------------
-// SEGMENTS 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// SEGMENTS
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region SEGMENTS || Snake position & segments
 void ASnakePawn::SetupSegmentPositions()
 {
@@ -164,9 +162,9 @@ void ASnakePawn::AddSegment()
 #pragma endregion
 
 
-// --------------------------------------------------------------------------------------------------------
-// COLLISIONS 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// COLLISIONS
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region COLLISION || Overlap & OnHit
 // Food collecting function
 void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -220,9 +218,9 @@ void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 #pragma endregion 
 
 
-// --------------------------------------------------------------------------------------------------------
-// HELPER FUNCTIONS 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// HELPER FUNCTIONS
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region HELPERS || Initialization, Movement, Boost, Segments, Grid, Hud, Material
 
 // --- Tick helpers ---
@@ -301,14 +299,6 @@ void ASnakePawn::UpdateHUDBoost() const
     }
 }
 
-void ASnakePawn::UpdateGridMap()
-{
-	if (GridMapWidget)
-	{
-		GridMapWidget->SetGridData(GridWidth, GridHeight, Grid.Cells);
-	}
-}
-
 UMaterialInstance* ASnakePawn::GetNextMaterial()
 {
 	if (WatercolorMaterials.IsEmpty()) return nullptr;
@@ -368,25 +358,14 @@ void ASnakePawn::InitHUD()
 		HUDWidget->AddToViewport();
 		HUDWidget->UpdateScore(0);
 	}
-	
-	// After creating HUDWidget, also create the map widget
-	if (GridMapWidgetClass)
-	{
-	    GridMapWidget = CreateWidget<UGridMapHUD>(GetWorld(), GridMapWidgetClass);
-	    if (GridMapWidget)
-	    {
-	        GridMapWidget->AddToViewport();
-	        GridMapWidget->SetGridData(GridWidth, GridHeight, Grid.Cells);
-	    }
-	}
 }
 
 #pragma endregion
 
 
-// --------------------------------------------------------------------------------------------------------
-// GRID 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// GRID
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region GRID
 // Take the world space and make it into a grid 
 FIntPoint ASnakePawn::WorldToGrid(FVector WorldPos) const
@@ -426,9 +405,9 @@ FVector ASnakePawn::GetRandomEmptyCell() const
 #pragma endregion
 
 
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 // SNAKE POWER-UPS
-// --------------------------------------------------------------------------------------------------------
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region SNAKE POWER-UPS || SpeedBoost, Invisibility
 void ASnakePawn::ApplySpeedBoost(float Multiplier, float Duration)
 {
