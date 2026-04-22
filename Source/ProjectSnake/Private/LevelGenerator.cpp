@@ -229,7 +229,6 @@ AActor* ALevelGenerator::SpawnFoodOfClass_Internal(TSubclassOf<AFood> FoodClass)
  
 	FIntPoint Cell = GetRandomEmptyCell();
 	FVector Location = GridToWorld(Cell);
-	Location.Z += 50.0f; // lift slightly above the floor
  
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;

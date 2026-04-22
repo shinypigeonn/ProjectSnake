@@ -15,7 +15,7 @@ void ASnakeGameMode::BeginPlay()
 	SetGameState(EGameState::Playing);
 }
 
-void ASnakeGameMode::SpawnTiles()
+void ASnakeGameMode::SpawnTiles() // CAN BE REMOVED
 {
 	/*for (int32 y = 0; y < Grid.Height; y++)
 	{
