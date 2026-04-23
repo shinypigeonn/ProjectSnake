@@ -39,8 +39,6 @@ ASnakePawn::ASnakePawn()
 	// --- Camera component ---
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComponent->SetupAttachment(SpringArm);
-
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
 // Called when the game starts or when spawned
@@ -166,11 +164,13 @@ void ASnakePawn::AddSegment()
 // COLLISIONS
 // ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region COLLISION || Overlap & OnHit
+
 // Food collecting function
 void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+	// --- Food ---
 	if (AFood* Food = Cast<AFood>(OtherActor))
 	{
 		const FFoodData& Data = Food->FoodData;
@@ -193,6 +193,27 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 			
 		default: break; // Basic and Special have no powers
 		}
+	}
+	
+	// --- Snake segment collision (self or other player) ---
+	if (OtherActor && OtherActor->ActorHasTag(FName("SnakeSegment")))
+	{
+		if (bIsInvisible) return; 
+		
+		// Ignore our own first 3 segments — they're always right behind the head
+        // and would cause a false collision immediately after turning.
+        if (ASnakeSegment* HitSegment = Cast<ASnakeSegment>(OtherActor))
+        {
+            int32 SegIndex = Segments.IndexOfByKey(HitSegment);
+            if (SegIndex >= 0 && SegIndex < 3) return; // too close to head, skip
+        }
+ 
+        if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Hit a snake segment — game over!"));
+            GameMode->OnGameOver();
+            Destroy();
+        }
 	}
 }
 

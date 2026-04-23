@@ -7,6 +7,8 @@
 #include "SnakeGrid.h"
 #include "SnakeGameMode.generated.h"
 
+class ASnakePawn;
+
 UENUM(BlueprintType)
 enum class EGameState : uint8
 {
@@ -33,6 +35,9 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	void OnPlay();	
 	
 	UFUNCTION(BlueprintCallable, Category="GameMode")
+	void OnPlayerDied(ASnakePawn* DeadPawn);
+	
+	UFUNCTION(BlueprintCallable, Category="GameMode")
 	void OnGameOver();
 	
 	UFUNCTION(BlueprintCallable, Category="GameMode")
@@ -44,9 +49,32 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	protected:
 	virtual void BeginPlay() override;
 	
+	// --- Game mode ---
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	TSubclassOf<ASnakePawn> SnakePawnClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	FTransform Player1SpawnTransform;
+	
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	FTransform Player2SpawnTransform;
+	
+	// Player1IMC = WASD mapping context
+	// Player2IMC = Arrow Keys mapping context
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> Player1IMC;
+ 
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> Player2IMC;
+ 
+	// Widget to show on a player's screen when they lose
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
+	
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	float RestartDelay = 3.0f;
 	
+	// --- Grid ---
 	UPROPERTY(EditDefaultsOnly, Category="Grid")
 	TSubclassOf<AActor> TileBP;
 	
@@ -60,8 +88,11 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	private:
 	EGameState CurrentState = EGameState::MainMenu;
-	
 	FTimerHandle RestartTimer;
 	
+	int32 ActivePlayerCount = 0; // How many snakes are still alive
+	
+	void SpawnAndPossessPlayers();
 	void SetGameState(EGameState newState);
+	void ApplyIMC(APlayerController* PC, UInputMappingContext* IMC);
 };

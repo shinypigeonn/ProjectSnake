@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SnakeSegment.generated.h"
+ 
+class USphereComponent;
 
 UCLASS()
 class PROJECTSNAKE_API ASnakeSegment : public AActor
@@ -18,4 +20,8 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
     TObjectPtr<UStaticMeshComponent> VisualMesh;
+    
+    // Overlap sphere 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+    TObjectPtr<USphereComponent> OverlapSphere;
 };
