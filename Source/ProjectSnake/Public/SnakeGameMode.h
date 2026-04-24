@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "SnakeGrid.h"
+#include "InputMappingContext.h"
 #include "SnakeGameMode.generated.h"
 
 class ASnakePawn;
@@ -61,10 +62,10 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	// Player1IMC = WASD mapping context
 	// Player2IMC = Arrow Keys mapping context
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Input", meta = (AllowPrivateAccess))
 	TObjectPtr<UInputMappingContext> Player1IMC;
  
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Input", meta = (AllowPrivateAccess))
 	TObjectPtr<UInputMappingContext> Player2IMC;
  
 	// Widget to show on a player's screen when they lose
