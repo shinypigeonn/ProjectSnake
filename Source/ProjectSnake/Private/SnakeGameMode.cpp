@@ -1,8 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SnakeGameMode.h"
-
-#include "EnhancedInputSubsystems.h"
 #include "SnakePawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,14 +23,6 @@ void ASnakeGameMode::BeginPlay()
 //  ────────────────────────────────────────────────────────────────────────────────────────────────────────
 #pragma region SETUP | IMC & LOCAL PLAYER SETUP
 
-void ASnakeGameMode::ApplyIMC(APlayerController* PC, UInputMappingContext* IMC)
-{
-	if (!PC || !IMC) return;
-	if (ULocalPlayer* LP = PC->GetLocalPlayer())
-		if (auto* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-			Subsystem->AddMappingContext(IMC, 0);
-}
-
 void ASnakeGameMode::SpawnAndPossessPlayers()
 {
 	if (!SnakePawnClass) return;
@@ -43,37 +33,38 @@ void ASnakeGameMode::SpawnAndPossessPlayers()
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	
 	// --- Player 1 ---
-	APlayerController* PC1 = UGameplayStatics::GetPlayerController(World, 0);
+	APlayerController* PC0 = UGameplayStatics::GetPlayerController(World, 0);
+	if (!PC0)
+		PC0 = UGameplayStatics::CreatePlayer(World, 0, false);
+ 
+	if (PC0)
+	{
+		ASnakePawn* Pawn1 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player1SpawnTransform, Params);
+		if (Pawn1)
+		{
+			Pawn1->ApplyIMC(Player1IMC); // WASD
+			ActivePlayerCount++;
+			PC0->Possess(Pawn1);
+		}
+	}
+	
+	// --- Player 2 ---
+	APlayerController* PC1 = UGameplayStatics::GetPlayerController(World, 1);
 	if (!PC1)
 		PC1 = UGameplayStatics::CreatePlayer(World, 1, false);
  
 	if (PC1)
 	{
-		ASnakePawn* Pawn1 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player1SpawnTransform, Params);
-		if (Pawn1)
-		{
-			PC1->Possess(Pawn1);
-			ApplyIMC(PC1, Player1IMC); // WASD
-			ActivePlayerCount++;
-		}
-	}
-	
-	// --- Player 2 ---
-	APlayerController* PC2 = UGameplayStatics::GetPlayerController(World, 1);
-	if (!PC2)
-		PC2 = UGameplayStatics::CreatePlayer(World, 1, false);
- 
-	if (PC2)
-	{
 		ASnakePawn* Pawn2 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player2SpawnTransform, Params);
 		if (Pawn2)
 		{
-			PC2->Possess(Pawn2);
-			ApplyIMC(PC2, Player2IMC); // Arrow keys
-			ActivePlayerCount++;
+			Pawn2->ApplyIMC(Player2IMC); // Gamepad
+			ActivePlayerCount++;	
+			PC1->Possess(Pawn2);
 		}
 	}
 }
+
 #pragma endregion
 
 //  ────────────────────────────────────────────────────────────────────────────────────────────────────────

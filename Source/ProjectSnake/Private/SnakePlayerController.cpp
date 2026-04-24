@@ -8,15 +8,27 @@ void ASnakePlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+    if (!GetLocalPlayer()) return;
+
+    int32 ID = GetLocalPlayer()->GetControllerId();
+
+    UInputMappingContext* ChosenIMC = nullptr;
+
+    if (ID == 0)
     {
-        if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-            LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+        ChosenIMC = Player1IMC; // WASD
+    }
+    else if (ID == 1)
+    {
+        ChosenIMC = Player2IMC; // Arrows
+    }
+
+    if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+        GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+    {
+        if (ChosenIMC)
         {
-            if (PlayerIMC)
-            {
-                Subsystem->AddMappingContext(PlayerIMC, 0);
-            }
+            Subsystem->AddMappingContext(ChosenIMC, 0);
         }
     }
 }

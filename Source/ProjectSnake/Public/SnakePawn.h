@@ -25,6 +25,7 @@ class PROJECTSNAKE_API ASnakePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ASnakePawn();
+	void ApplyIMC(UInputMappingContext* IMC);
 
 protected:
 	// Called when the game starts or when spawned
@@ -32,13 +33,15 @@ protected:
 
 	// --- Input ---
 	
+	// --- Player one Input actions ---
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	void OnBoostPressed();
 	void OnBoostReleased();
 	
 #pragma region SNAKEPROPERTIES
-	// -------------------- SNAKE PAWN PROPERTIES -----------------------------------
+	
+	// --- Snake Pawn Properties ---
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
@@ -54,23 +57,23 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	TObjectPtr<UInputAction> IA_Move;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
-	TObjectPtr<UInputAction> MoveAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
-	TObjectPtr<UInputAction> TurnAction;
+	TObjectPtr<UInputAction> IA_Turn;
 	
 	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> BoostAction;
-
+	TObjectPtr<UInputAction> IA_Boost;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float MoveSpeed = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float TurnSpeed = 200.0f;
 	
-	// --------------------- SNAKE SEGMENT PROPERTIES ---------------------------------
+	// --- Snake segment properties ---
 	
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
 	TSubclassOf<ASnakeSegment> SegmentClass;
@@ -93,7 +96,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
     TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
 	
-	// ---------------------- SNAKE POWERS ---------------------------------------------
+	// --- Snake Powers ---
 	
 	// Active power state
 	bool bIsInvisible = false;
@@ -111,9 +114,9 @@ protected:
 	void RemoveSpeedBoost();
 	void RemoveInvisibility();
 	
-	// --------------------- SNAKE BOOST ---------------------------------------------
-	
+	// --- Snake Boost ---
 	bool bWantsToBoost = false; // boost input
+	bool bWantsToBoost2 = false;
 	
 	// Boost bar (0.0 = empty, 1.0 = full)
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
@@ -140,8 +143,7 @@ protected:
 	void ApplyUnlimitedBoost(float Duration);
 	void RemoveUnlimitedBoost();
 	
-	// ----------------------- GRID -----------------------------------------------------
-	
+	// --- Grid ---
 	FSnakeGrid Grid;
 	
 	UPROPERTY(EditAnywhere, Category="Grid")
@@ -198,7 +200,6 @@ protected:
 	void InitSnake();
 	void InitInput() const;
 	void InitHUD();
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

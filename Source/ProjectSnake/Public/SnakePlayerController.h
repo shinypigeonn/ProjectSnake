@@ -20,5 +20,8 @@ public:
 
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input")
-    TObjectPtr<UInputMappingContext> PlayerIMC;
+    TObjectPtr<UInputMappingContext> Player1IMC;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> Player2IMC;
 };

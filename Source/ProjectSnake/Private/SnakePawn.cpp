@@ -49,7 +49,7 @@ void ASnakePawn::BeginPlay()
 	
 	InitGrid();
 	InitSnake();
-	InitInput();
+	
 	InitHUD();
 }
 
@@ -75,22 +75,28 @@ void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	InitInput();
+	
 	// Binds actions
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASnakePawn::Move);
-        EnhancedInput->BindAction(MoveAction, ETriggerEvent::Completed, this, &ASnakePawn::Move);
-        EnhancedInput->BindAction(TurnAction, ETriggerEvent::Triggered, this, &ASnakePawn::Turn);
-        EnhancedInput->BindAction(TurnAction, ETriggerEvent::Completed, this, &ASnakePawn::Turn);
-		EnhancedInput->BindAction(BoostAction, ETriggerEvent::Triggered, this, &ASnakePawn::OnBoostPressed);
-		EnhancedInput->BindAction(BoostAction, ETriggerEvent::Completed, this, &ASnakePawn::OnBoostReleased);
+		// --- Player ---
+        EnhancedInput->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ASnakePawn::Move);
+        EnhancedInput->BindAction(IA_Move, ETriggerEvent::Completed, this, &ASnakePawn::Move);
+        EnhancedInput->BindAction(IA_Turn, ETriggerEvent::Triggered, this, &ASnakePawn::Turn);
+        EnhancedInput->BindAction(IA_Turn, ETriggerEvent::Completed, this, &ASnakePawn::Turn);
+		EnhancedInput->BindAction(IA_Boost, ETriggerEvent::Triggered, this, &ASnakePawn::OnBoostPressed);
+		EnhancedInput->BindAction(IA_Boost, ETriggerEvent::Completed, this, &ASnakePawn::OnBoostReleased);
     }
 }
+
+// --- Player 1 input actions
 
 void ASnakePawn::Move(const FInputActionValue& Value)
 {
 	MoveInput = Value.Get<float>(); 
 }
+
 void ASnakePawn::Turn(const FInputActionValue& Value)
 {
 	TurnInput = Value.Get<float>();
@@ -103,6 +109,11 @@ void ASnakePawn::OnBoostPressed()
 void ASnakePawn::OnBoostReleased()
 {
 	bWantsToBoost = false;
+}
+
+void ASnakePawn::ApplyIMC(UInputMappingContext* IMC)
+{
+	InputMappingContext = IMC;
 }
 
 #pragma endregion
@@ -245,6 +256,7 @@ void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 #pragma region HELPERS || Initialization, Movement, Boost, Segments, Grid, Hud, Material
 
 // --- Tick helpers ---
+
 void ASnakePawn::UpdateBoostState(float DeltaTime)
 {
 	if (bUnlimitedBoost)
