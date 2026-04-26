@@ -9,7 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Food.h"
-#include "SnakeGameMode.h"
+#include "MultiplayerSnakeMode.h"
 
 // Sets default values
 ASnakePawn::ASnakePawn()
@@ -49,15 +49,51 @@ void ASnakePawn::BeginPlay()
 	
 	InitGrid();
 	InitSnake();
-	
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// POSSESION / IMC
+// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+// Called by the GameMode *before* Possess() so the stored IMC is ready when
+// PawnClientRestart fires.
+void ASnakePawn::ApplyIMC(UInputMappingContext* IMC)
+{
+	InputMappingContext = IMC;
+}
+
+// PawnClientRestart fires after the controller has fully possessed this pawn —
+// the earliest safe point to touch the EnhancedInput subsystem and create the HUD.
+void ASnakePawn::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	RegisterIMC();
 	InitHUD();
+}
+
+void ASnakePawn::RegisterIMC() const
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+ 
+	ULocalPlayer* LP = PC->GetLocalPlayer();
+	if (!LP) return;
+ 
+	UEnhancedInputLocalPlayerSubsystem* Subsystem =
+		LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	if (!Subsystem) return;
+ 
+	// Clear any stale IMCs first so swapping works cleanly.
+	Subsystem->ClearAllMappings();
+ 
+	if (InputMappingContext)
+		Subsystem->AddMappingContext(InputMappingContext, 0);
 }
 
 // Called every frame
 void ASnakePawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
 	UpdateBoostState(DeltaTime);
 	UpdateMovement(DeltaTime);
 	UpdateHUDBoost();
@@ -109,11 +145,6 @@ void ASnakePawn::OnBoostPressed()
 void ASnakePawn::OnBoostReleased()
 {
 	bWantsToBoost = false;
-}
-
-void ASnakePawn::ApplyIMC(UInputMappingContext* IMC)
-{
-	InputMappingContext = IMC;
 }
 
 #pragma endregion
@@ -219,7 +250,7 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
             if (SegIndex >= 0 && SegIndex < 3) return; // too close to head, skip
         }
  
-        if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+        if (AMultiplayerSnakeMode* GameMode = Cast<AMultiplayerSnakeMode>(GetWorld()->GetAuthGameMode()))
         {
             UE_LOG(LogTemp, Warning, TEXT("Hit a snake segment — game over!"));
             GameMode->OnGameOver();
@@ -239,7 +270,7 @@ void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 
     if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
     {
-        if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+        if (AMultiplayerSnakeMode* GameMode = Cast<AMultiplayerSnakeMode>(GetWorld()->GetAuthGameMode()))
         {
         	UE_LOG(LogTemp, Warning, TEXT("Hit a WALL!"));
             GameMode->OnGameOver();       
@@ -384,17 +415,22 @@ void ASnakePawn::InitInput() const
 void ASnakePawn::InitHUD()
 {
 	if (!HUDWidgetClass) return;
-
-	HUDWidget = CreateWidget<USnakeHUD>(GetWorld(), HUDWidgetClass);
+ 
+	// Use the owning PlayerController so each local player gets their own
+	// widget on their own viewport in split-screen.
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+ 
+	HUDWidget = CreateWidget<USnakeHUD>(PC, HUDWidgetClass);
 	if (HUDWidget)
 	{
-		HUDWidget->AddToViewport();
+		// AddToPlayerScreen renders only on this player's split viewport.
+		HUDWidget->AddToPlayerScreen();
 		HUDWidget->UpdateScore(0);
 	}
 }
 
 #pragma endregion
-
 
 // ────────────────────────────────────────────────────────────────────────────────────────────────────────
 // GRID

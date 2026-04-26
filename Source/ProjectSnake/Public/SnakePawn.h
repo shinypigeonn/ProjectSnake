@@ -31,9 +31,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void PawnClientRestart() override;
 	// --- Input ---
-	
-	// --- Player one Input actions ---
+
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	void OnBoostPressed();
@@ -213,4 +213,6 @@ private:
 	
 	int32 LastMaterialIndex = -1;
     UMaterialInstance* GetNextMaterial();
+    
+    void RegisterIMC() const;
 };

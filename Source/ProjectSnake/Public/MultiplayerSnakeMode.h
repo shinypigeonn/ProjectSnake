@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,45 +8,65 @@
 
 class ASnakePawn;
 
+UENUM(BlueprintType)
+enum class EGameState : uint8
+{
+	MainMenu       UMETA(DisplayName = "Main Menu"),
+	WaitingToStart UMETA(DisplayName = "Waiting to Start"),
+	Playing        UMETA(DisplayName = "Playing"),
+	GameOver       UMETA(DisplayName = "Game Over"),
+	Restarting     UMETA(DisplayName = "Restarting"),
+};
+
 UCLASS()
 class PROJECTSNAKE_API AMultiplayerSnakeMode : public AGameMode
 {
 	GENERATED_BODY()
-	
-	FSnakeGrid Grid;
-	
-	public:
+
+public:
 	AMultiplayerSnakeMode();
 
 	UFUNCTION(BlueprintCallable, Category="GameMode")
 	void OnPlayerDied(ASnakePawn* DeadPawn);
 
-	protected:
+	UFUNCTION(BlueprintCallable, Category="GameMode")
+	void OnGameOver();
+
+	// AGameMode already declares RestartGame() as a UFUNCTION — just override it.
+	virtual void RestartGame() override;
+
+	UFUNCTION(BlueprintPure, Category="GameMode")
+	EGameState GetCurrentState() const { return CurrentState; }
+
+protected:
 	virtual void BeginPlay() override;
-	
-	// --- Game mode ---
+
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	TSubclassOf<ASnakePawn> SnakePawnClass;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	FTransform Player1SpawnTransform;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	FTransform Player2SpawnTransform;
-	
-	// Player1IMC = WASD mapping context
-	// Player2IMC = Arrow Keys mapping context
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input")
-    TObjectPtr<UInputMappingContext> Player1IMC;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> Player1IMC;
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> Player2IMC;
- 
-	// Widget to show on a player's screen when they lose
+
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
-	
-	int32 ActivePlayerCount = 0; // How many snakes are still alive
-	
+
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	float RestartDelay = 3.0f;
+
+private:
+	EGameState CurrentState = EGameState::MainMenu;
+	FTimerHandle RestartTimer;
+	int32 ActivePlayerCount = 0;
+
 	void SpawnAndPossessPlayers();
+	void SetGameState(EGameState NewState);
 };
