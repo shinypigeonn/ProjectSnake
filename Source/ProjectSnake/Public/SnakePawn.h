@@ -25,22 +25,17 @@ class PROJECTSNAKE_API ASnakePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ASnakePawn();
-	void ApplyIMC(UInputMappingContext* IMC);
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	virtual void PawnClientRestart() override;
-	// --- Input ---
-
+	
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	void OnBoostPressed();
 	void OnBoostReleased();
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 	
 #pragma region SNAKEPROPERTIES
-	
 	// --- Snake Pawn Properties ---
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
@@ -116,7 +111,6 @@ protected:
 	
 	// --- Snake Boost ---
 	bool bWantsToBoost = false; // boost input
-	bool bWantsToBoost2 = false;
 	
 	// Boost bar (0.0 = empty, 1.0 = full)
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
@@ -148,7 +142,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Grid")
 	int32 GridWidth = 20;
-
+	
 	UPROPERTY(EditAnywhere, Category="Grid")
 	int32 GridHeight = 20;
 	
@@ -158,18 +152,16 @@ protected:
 	FIntPoint WorldToGrid(FVector WorldPos) const;
 	FVector GridToWorld(FIntPoint GridPos) const;
 	FVector GetRandomEmptyCell() const;
-	// ----------------------------------------------------------------------------------------
 #pragma endregion
 	
 #pragma region HUDPROPERTIES
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
-
-	USnakeHUD* HUDWidget;
-	
+ 
+	USnakeHUD* HUDWidget = nullptr;
 	void UpdateHUDScore() const;
-	
+	void UpdateHUDBoost() const;
 	int32 Score = 0;
 	
 #pragma endregion
@@ -187,32 +179,19 @@ protected:
 	
 	void AddSegment(); // Adding snake segment for food collection
 	void SetupSegmentPositions(); // First additional segments (body of snake)
-	
-	// --- Tick Helpers ---	
 	void UpdateBoostState(float DeltaTime);	
 	void UpdateMovement(float DeltaTime);
 	void UpdateSegments();	
 	void UpdateGrid();
-	void UpdateHUDBoost() const;
-	
-	// --- Initialization ---
 	void InitGrid();
 	void InitSnake();
-	void InitInput() const;
 	void InitHUD();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 private:
 	float MoveInput = 0.0f;
 	float TurnInput = 0.0f;
-	
 	int32 LastMaterialIndex = -1;
     UMaterialInstance* GetNextMaterial();
-    
-    void RegisterIMC() const;
 };

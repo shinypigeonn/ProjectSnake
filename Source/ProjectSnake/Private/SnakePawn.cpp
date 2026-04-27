@@ -5,28 +5,24 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
-#include "InputAction.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "Food.h"
 #include "MultiplayerSnakeMode.h"
 
-// Sets default values
+// ────────────────────────────────────────────────────────────────────────────────
+// CONSTRUCTOR
+// ────────────────────────────────────────────────────────────────────────────────
+
 ASnakePawn::ASnakePawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	// --- Collision Components ---
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	SetRootComponent(CollisionComponent);
 	CollisionComponent->InitSphereRadius(50.0f);
 	
-	// --- Mesh Components ---
 	VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
 	VisualMesh->SetupAttachment(CollisionComponent);
 	
-	// --- SpringArm Component ---
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(CollisionComponent);
 	SpringArm->TargetArmLength = 700.0f;
@@ -36,61 +32,26 @@ ASnakePawn::ASnakePawn()
 	SpringArm->bInheritRoll = false;
 	SpringArm->bInheritYaw = false;
 
-	// --- Camera component ---
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComponent->SetupAttachment(SpringArm);
 }
 
-// Called when the game starts or when spawned
+// ────────────────────────────────────────────────────────────────────────────────
+// BEGIN PLAY
+// ────────────────────────────────────────────────────────────────────────────────
+
 void ASnakePawn::BeginPlay()
 {
-	// Runtime initialization, adding input mapping contexts, reference that depend on having a world
 	Super::BeginPlay();
-	
 	InitGrid();
 	InitSnake();
+	InitHUD(); // Safe here — controller is valid by BeginPlay when possessed by GameMode
 }
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-// POSSESION / IMC
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
+// TICK
+// ────────────────────────────────────────────────────────────────────────────────
 
-// Called by the GameMode *before* Possess() so the stored IMC is ready when
-// PawnClientRestart fires.
-void ASnakePawn::ApplyIMC(UInputMappingContext* IMC)
-{
-	InputMappingContext = IMC;
-}
-
-// PawnClientRestart fires after the controller has fully possessed this pawn —
-// the earliest safe point to touch the EnhancedInput subsystem and create the HUD.
-void ASnakePawn::PawnClientRestart()
-{
-	Super::PawnClientRestart();
-	RegisterIMC();
-	InitHUD();
-}
-
-void ASnakePawn::RegisterIMC() const
-{
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC) return;
- 
-	ULocalPlayer* LP = PC->GetLocalPlayer();
-	if (!LP) return;
- 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem =
-		LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-	if (!Subsystem) return;
- 
-	// Clear any stale IMCs first so swapping works cleanly.
-	Subsystem->ClearAllMappings();
- 
-	if (InputMappingContext)
-		Subsystem->AddMappingContext(InputMappingContext, 0);
-}
-
-// Called every frame
 void ASnakePawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -101,36 +62,13 @@ void ASnakePawn::Tick(float DeltaTime)
 	UpdateGrid();
 }
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-// INPUT
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-#pragma region INPUT 
-
-// Called to bind functionality to input
-void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	InitInput();
-	
-	// Binds actions
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-    {
-		// --- Player ---
-        EnhancedInput->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ASnakePawn::Move);
-        EnhancedInput->BindAction(IA_Move, ETriggerEvent::Completed, this, &ASnakePawn::Move);
-        EnhancedInput->BindAction(IA_Turn, ETriggerEvent::Triggered, this, &ASnakePawn::Turn);
-        EnhancedInput->BindAction(IA_Turn, ETriggerEvent::Completed, this, &ASnakePawn::Turn);
-		EnhancedInput->BindAction(IA_Boost, ETriggerEvent::Triggered, this, &ASnakePawn::OnBoostPressed);
-		EnhancedInput->BindAction(IA_Boost, ETriggerEvent::Completed, this, &ASnakePawn::OnBoostReleased);
-    }
-}
-
-// --- Player 1 input actions
+// ────────────────────────────────────────────────────────────────────────────────
+// INPUT — called by SnakePlayerController
+// ────────────────────────────────────────────────────────────────────────────────
 
 void ASnakePawn::Move(const FInputActionValue& Value)
 {
-	MoveInput = Value.Get<float>(); 
+	// Currently move forward is always-on; this can be used for speed modulation
 }
 
 void ASnakePawn::Turn(const FInputActionValue& Value)
@@ -142,34 +80,29 @@ void ASnakePawn::OnBoostPressed()
 {
 	bWantsToBoost = true;
 }
+
 void ASnakePawn::OnBoostReleased()
 {
 	bWantsToBoost = false;
 }
 
-#pragma endregion
-
-
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 // SEGMENTS
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-#pragma region SEGMENTS || Snake position & segments
+// ────────────────────────────────────────────────────────────────────────────────
+#pragma region SEGMENTS
+
 void ASnakePawn::SetupSegmentPositions()
 {
     const FVector HeadLocation = GetActorLocation();
-    const FVector BackwardDir = -GetActorForwardVector();
+    const FVector BackwardDir  = -GetActorForwardVector();
 
-    // Fill enough history for all initial segments
     int32 RequiredHistory = (InitialSegments + 1) * SegmentSpacing;
     PositionHistory.Empty();
     PositionHistory.Reserve(RequiredHistory);
 
     for (int32 i = 0; i < RequiredHistory; i++)
-    {
         PositionHistory.Add(HeadLocation + BackwardDir * i);
-    }
 
-    // Spawn segments and place them at correct history offsets
     for (int32 i = 0; i < InitialSegments; i++)
     {
         AddSegment();
@@ -182,7 +115,6 @@ void ASnakePawn::AddSegment()
 {
     if (!SegmentClass) return;
 
-    // Correct precedence — (Segments.Num() + 1) * SegmentSpacing
     int32 HistoryIndex = (Segments.Num() + 1) * SegmentSpacing;
     FVector SpawnLocation = PositionHistory.IsValidIndex(HistoryIndex)
         ? PositionHistory[HistoryIndex]
@@ -193,7 +125,6 @@ void ASnakePawn::AddSegment()
 
     if (NewSegment)
     {
-        // No AttachToActor — segments follow PositionHistory only
         Segments.Add(NewSegment);
         NewSegment->SetMaterial(GetNextMaterial());
     }
@@ -201,13 +132,11 @@ void ASnakePawn::AddSegment()
 
 #pragma endregion
 
+// ────────────────────────────────────────────────────────────────────────────────
+// COLLISION
+// ────────────────────────────────────────────────────────────────────────────────
+#pragma region COLLISION
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-// COLLISIONS
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-#pragma region COLLISION || Overlap & OnHit
-
-// Food collecting function
 void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
@@ -216,124 +145,95 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 	if (AFood* Food = Cast<AFood>(OtherActor))
 	{
 		const FFoodData& Data = Food->FoodData;
+		Score += Data.PointValue;
+		Food->OnEaten();
+		AddSegment();
+		UpdateHUDScore();
 		
-		Score += Data.PointValue; // Adding the score equivalent to the food type's points 
-		Food->OnEaten(); // Calls the Food class method OnEaten 
-		AddSegment(); 
-		UpdateHUDScore(); 
-		
-		// Apply powers based on food type
 		switch (Data.FoodType)
 		{
-			case EFoodType::SpeedBoost:
-			ApplyUnlimitedBoost(Data.BenefitDuration); 
-			break;
-			
-		case EFoodType::Golden:
-			ApplyInvisibility(Data.BenefitDuration);
-			break;
-			
-		default: break; // Basic and Special have no powers
+		case EFoodType::SpeedBoost: ApplyUnlimitedBoost(Data.BenefitDuration); break;
+		case EFoodType::Golden:     ApplyInvisibility(Data.BenefitDuration);   break;
+		default: break;
 		}
 	}
 	
-	// --- Snake segment collision (self or other player) ---
+	// --- Snake segment collision ---
 	if (OtherActor && OtherActor->ActorHasTag(FName("SnakeSegment")))
 	{
-		if (bIsInvisible) return; 
+		if (bIsInvisible) return;
 		
-		// Ignore our own first 3 segments — they're always right behind the head
-        // and would cause a false collision immediately after turning.
         if (ASnakeSegment* HitSegment = Cast<ASnakeSegment>(OtherActor))
         {
             int32 SegIndex = Segments.IndexOfByKey(HitSegment);
-            if (SegIndex >= 0 && SegIndex < 3) return; // too close to head, skip
+            if (SegIndex >= 0 && SegIndex < 3) return; // ignore own near segments
         }
- 
+
         if (AMultiplayerSnakeMode* GameMode = Cast<AMultiplayerSnakeMode>(GetWorld()->GetAuthGameMode()))
         {
-            UE_LOG(LogTemp, Warning, TEXT("Hit a snake segment — game over!"));
-            GameMode->OnGameOver();
-            Destroy();
+            UE_LOG(LogTemp, Warning, TEXT("Hit a snake segment!"));
+            GameMode->OnPlayerDied(this);
         }
 	}
 }
 
-// Collision function
 void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// Log every hit regardless of tag
-	UE_LOG(LogTemp, Warning, TEXT("OnHit fired! Hit actor: %s"), *OtherActor->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("OnHit: %s"), *OtherActor->GetName());
 	
-	if (bIsInvisible) return; // Golden power active, ignore walls
+	if (bIsInvisible) return;
 
     if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
     {
         if (AMultiplayerSnakeMode* GameMode = Cast<AMultiplayerSnakeMode>(GetWorld()->GetAuthGameMode()))
         {
         	UE_LOG(LogTemp, Warning, TEXT("Hit a WALL!"));
-            GameMode->OnGameOver();       
-        	Destroy();
+            GameMode->OnPlayerDied(this);
         }
     }
 }
-#pragma endregion 
 
+#pragma endregion
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-// HELPER FUNCTIONS
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-#pragma region HELPERS || Initialization, Movement, Boost, Segments, Grid, Hud, Material
-
-// --- Tick helpers ---
+// ────────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ────────────────────────────────────────────────────────────────────────────────
+#pragma region HELPERS
 
 void ASnakePawn::UpdateBoostState(float DeltaTime)
 {
 	if (bUnlimitedBoost)
-	{
 		BoostCharge = 1.0f;
-	}
 	else if (bWantsToBoost && BoostCharge > 0.0f)
-	{
 		BoostCharge = FMath::Clamp(BoostCharge - BoostDrainRate * DeltaTime, 0.0f, 1.0f);
-	}
 	else
-	{
 		BoostCharge = FMath::Clamp(BoostCharge + BoostRefillRate * DeltaTime, 0.0f, 1.0f);
-	}
 }
 
 void ASnakePawn::UpdateMovement(float DeltaTime)
 {
-	// Rotation
 	if (!FMath::IsNearlyZero(TurnInput))
-	{
 		AddActorLocalRotation(FRotator(0.0f, TurnInput * TurnSpeed * DeltaTime, 0.0f));
-	}
 
-	// Forward movement — speed depends on current boost state
-	const bool bIsBoosting = bUnlimitedBoost || (bWantsToBoost && BoostCharge > 0.0f);
+	const bool  bIsBoosting  = bUnlimitedBoost || (bWantsToBoost && BoostCharge > 0.0f);
 	const float CurrentSpeed = MoveSpeed * ActiveSpeedMultiplier * (bIsBoosting ? BoostSpeedMultiplier : 1.0f);
 	AddActorWorldOffset(GetActorForwardVector() * CurrentSpeed * DeltaTime, true);
 }
 
 void ASnakePawn::UpdateSegments() 
 {
-    PositionHistory.Insert(GetActorLocation(), 0); // Save head position to history
+    PositionHistory.Insert(GetActorLocation(), 0);
 
-    // Trim history to only what's needed — prevents infinite memory growth
     int32 MaxHistory = (Segments.Num() + 1) * SegmentSpacing + 1;
     if (PositionHistory.Num() > MaxHistory)
         PositionHistory.SetNum(MaxHistory);
 
-    for (int32 i = 0; i < Segments.Num(); i++) // Move each segment to its position in history
+    for (int32 i = 0; i < Segments.Num(); i++)
     {
         int32 HistoryIndex = (i + 1) * SegmentSpacing;
         if (PositionHistory.IsValidIndex(HistoryIndex))
-        {
             Segments[i]->SetActorLocation(PositionHistory[HistoryIndex]);
-        }
     }
 }
 
@@ -342,89 +242,56 @@ void ASnakePawn::UpdateGrid()
 	Grid.Clear(); 
 	Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
 	for (ASnakeSegment* Seg : Segments)
-	{
 		Grid.SetCell(WorldToGrid(Seg->GetActorLocation()), ESnakeCellType::Snake);
-	}
 }
 
 void ASnakePawn::UpdateHUDScore() const
 {
-    if (HUDWidget)
-    {
-        HUDWidget->UpdateScore(Score);
-    }
+    if (HUDWidget) HUDWidget->UpdateScore(Score);
 }
 
 void ASnakePawn::UpdateHUDBoost() const
 {
-    if (HUDWidget)
-    {
-        HUDWidget->UpdateBoost(BoostCharge, bUnlimitedBoost);
-    }
+    if (HUDWidget) HUDWidget->UpdateBoost(BoostCharge, bUnlimitedBoost);
 }
 
 UMaterialInstance* ASnakePawn::GetNextMaterial()
 {
 	if (WatercolorMaterials.IsEmpty()) return nullptr;
-
 	int32 Index;
-	do
-	{
-		Index = FMath::RandRange(0, WatercolorMaterials.Num() - 1);
-	}
+	do { Index = FMath::RandRange(0, WatercolorMaterials.Num() - 1); }
 	while (Index == LastMaterialIndex && WatercolorMaterials.Num() > 1);
-
 	LastMaterialIndex = Index;
 	return WatercolorMaterials[Index];
 }
 
-// --- Initialization ---
-
 void ASnakePawn::InitGrid()
 {
 	Grid = FSnakeGrid(GridWidth, GridHeight);
-	
-	// Mark border cells as walls
 	for (int32 X = 0; X < GridWidth; X++)
-	{
 		for (int32 Y = 0; Y < GridHeight; Y++)
 		{
-			bool bIsBorder = X == 0 || X == GridWidth - 1
-					  || Y == 0 || Y == GridHeight - 1;
-			if (bIsBorder)
-				Grid.SetCell(FIntPoint(X, Y), ESnakeCellType::Wall);
+			bool bIsBorder = X == 0 || X == GridWidth - 1 || Y == 0 || Y == GridHeight - 1;
+			if (bIsBorder) Grid.SetCell(FIntPoint(X, Y), ESnakeCellType::Wall);
 		}
-	}
 	Grid.SetCell(WorldToGrid(GetActorLocation()), ESnakeCellType::Snake);
 }
+
 void ASnakePawn::InitSnake()
 {    
 	SetupSegmentPositions();
 	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASnakePawn::OnOverlapBegin);
 	CollisionComponent->OnComponentHit.AddDynamic(this, &ASnakePawn::OnHit);
 }
-void ASnakePawn::InitInput() const
-{
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-		if (ULocalPlayer* LP = PC->GetLocalPlayer())
-			if (auto* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-				if (InputMappingContext)
-					Subsystem->AddMappingContext(InputMappingContext, 0);
-	
-}
+
 void ASnakePawn::InitHUD()
 {
 	if (!HUDWidgetClass) return;
- 
-	// Use the owning PlayerController so each local player gets their own
-	// widget on their own viewport in split-screen.
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC) return;
- 
 	HUDWidget = CreateWidget<USnakeHUD>(PC, HUDWidgetClass);
 	if (HUDWidget)
 	{
-		// AddToPlayerScreen renders only on this player's split viewport.
 		HUDWidget->AddToPlayerScreen();
 		HUDWidget->UpdateScore(0);
 	}
@@ -432,27 +299,24 @@ void ASnakePawn::InitHUD()
 
 #pragma endregion
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 // GRID
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 #pragma region GRID
-// Take the world space and make it into a grid 
+
 FIntPoint ASnakePawn::WorldToGrid(FVector WorldPos) const
 {
     return FIntPoint(
         FMath::FloorToInt(WorldPos.X / CellSize),
-        FMath::FloorToInt(WorldPos.Y / CellSize)
-    );
+        FMath::FloorToInt(WorldPos.Y / CellSize));
 }
 
-// Multiply back so every cell centers inside the cell (otherwise it will snap to the corner)
 FVector ASnakePawn::GridToWorld(FIntPoint GridPos) const
 {
     return FVector(
         GridPos.X * CellSize + CellSize * 0.5f,
         GridPos.Y * CellSize + CellSize * 0.5f,
-        GetActorLocation().Z
-    );
+        GetActorLocation().Z);
 }
 
 FVector ASnakePawn::GetRandomEmptyCell() const
@@ -465,73 +329,39 @@ FVector ASnakePawn::GetRandomEmptyCell() const
             if (Grid.GetCell(Pos) == ESnakeCellType::Empty)
                 EmptyCells.Add(Pos);
         }
-
     if (EmptyCells.IsEmpty()) return FVector::ZeroVector;
-    
-    FIntPoint Chosen = EmptyCells[FMath::RandRange(0, EmptyCells.Num() - 1)];
-    return GridToWorld(Chosen);
+    return GridToWorld(EmptyCells[FMath::RandRange(0, EmptyCells.Num() - 1)]);
 }
+
 #pragma endregion
 
+// ────────────────────────────────────────────────────────────────────────────────
+// POWER-UPS
+// ────────────────────────────────────────────────────────────────────────────────
+#pragma region POWER-UPS
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-// SNAKE POWER-UPS
-// ────────────────────────────────────────────────────────────────────────────────────────────────────────
-#pragma region SNAKE POWER-UPS || SpeedBoost, Invisibility
 void ASnakePawn::ApplySpeedBoost(float Multiplier, float Duration)
 {
-    // Clear existing timer if already active
     GetWorldTimerManager().ClearTimer(SpeedBoostTimer);
-    
     ActiveSpeedMultiplier = Multiplier;
-    
-    GetWorldTimerManager().SetTimer(
-        SpeedBoostTimer,
-        this,
-        &ASnakePawn::RemoveSpeedBoost,
-        Duration,
-        false  // Don't loop
-    );
+    GetWorldTimerManager().SetTimer(SpeedBoostTimer, this, &ASnakePawn::RemoveSpeedBoost, Duration, false);
 }
-
-void ASnakePawn::RemoveSpeedBoost()
-{
-    ActiveSpeedMultiplier = 1.0f;
-}
+void ASnakePawn::RemoveSpeedBoost() { ActiveSpeedMultiplier = 1.0f; }
 
 void ASnakePawn::ApplyInvisibility(float Duration)
 {
     GetWorldTimerManager().ClearTimer(InvisibilityTimer);
-    
     bIsInvisible = true;
-    
-    GetWorldTimerManager().SetTimer(
-        InvisibilityTimer,
-        this,
-        &ASnakePawn::RemoveInvisibility,
-        Duration,
-        false
-    );
+    GetWorldTimerManager().SetTimer(InvisibilityTimer, this, &ASnakePawn::RemoveInvisibility, Duration, false);
 }
-
-void ASnakePawn::RemoveInvisibility()
-{
-    bIsInvisible = false;
-}
+void ASnakePawn::RemoveInvisibility() { bIsInvisible = false; }
 
 void ASnakePawn::ApplyUnlimitedBoost(float Duration)
 {
     GetWorldTimerManager().ClearTimer(UnlimitedBoostTimer);
     bUnlimitedBoost = true;
-    GetWorldTimerManager().SetTimer(
-        UnlimitedBoostTimer, this,
-        &ASnakePawn::RemoveUnlimitedBoost,
-        Duration, false);
+    GetWorldTimerManager().SetTimer(UnlimitedBoostTimer, this, &ASnakePawn::RemoveUnlimitedBoost, Duration, false);
 }
-
-void ASnakePawn::RemoveUnlimitedBoost()
-{
-    bUnlimitedBoost = false;
-}
+void ASnakePawn::RemoveUnlimitedBoost() { bUnlimitedBoost = false; }
 
 #pragma endregion

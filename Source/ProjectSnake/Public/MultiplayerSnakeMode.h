@@ -55,6 +55,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> Player2IMC;
+	
+	// Player 2's separate IMC and actions (Arrow Keys)
+	// Player 1's are set directly on BP_SnakePlayerController defaults
+    
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> Player2_IA_Move;
+    
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> Player2_IA_Turn;
+    
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> Player2_IA_Boost;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
