@@ -33,9 +33,9 @@ void ASnakeGameMode::SpawnAndPossessPlayers()
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	
 	// --- Player 1 ---
-	APlayerController* PC0 = UGameplayStatics::GetPlayerController(World, 0);
+	APlayerController* PC0 = UGameplayStatics::GetPlayerController(this, 0);
 	if (!PC0)
-		PC0 = UGameplayStatics::CreatePlayer(World, 0, false);
+		PC0 = UGameplayStatics::CreatePlayer(this, 0, true);
  
 	if (PC0)
 	{
@@ -49,16 +49,16 @@ void ASnakeGameMode::SpawnAndPossessPlayers()
 	}
 	
 	// --- Player 2 ---
-	APlayerController* PC1 = UGameplayStatics::GetPlayerController(World, 1);
+	APlayerController* PC1 = UGameplayStatics::GetPlayerController(this, 1);
 	if (!PC1)
-		PC1 = UGameplayStatics::CreatePlayer(World, 1, false);
+		PC1 = UGameplayStatics::CreatePlayer(this, 1, true);
  
 	if (PC1)
 	{
 		ASnakePawn* Pawn2 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player2SpawnTransform, Params);
 		if (Pawn2)
 		{
-			Pawn2->ApplyIMC(Player2IMC); // Gamepad
+			Pawn2->ApplyIMC(Player2IMC); // Arrow keys
 			ActivePlayerCount++;	
 			PC1->Possess(Pawn2);
 		}

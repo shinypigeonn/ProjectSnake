@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"       
@@ -17,32 +16,31 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 
-UCLASS() // Tells Unreal this class participates in the reflection/object system
+UCLASS()
 class PROJECTSNAKE_API ASnakePawn : public APawn
 {
-	GENERATED_BODY() // Injects generated boilerplate that Unreal needs
+	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
 	ASnakePawn();
+
+	// Called after possession is complete — safe point to register input
+	virtual void PawnClientRestart() override;
+
+	// Called by GameMode to inject the correct IMC per player before possession
 	void ApplyIMC(UInputMappingContext* IMC);
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	// --- Input ---
-	
-	// --- Player one Input actions ---
 	void Move(const FInputActionValue& Value);
 	void Turn(const FInputActionValue& Value);
 	void OnBoostPressed();
 	void OnBoostReleased();
 	
 #pragma region SNAKEPROPERTIES
-	
-	// --- Snake Pawn Properties ---
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
 
@@ -55,9 +53,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	TObjectPtr<UCameraComponent> CameraComponent;
 
+	// Fallback IMC set in Blueprint defaults (used only if GameMode doesn't call ApplyIMC)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	TObjectPtr<UInputAction> IA_Move;
 
@@ -66,14 +65,14 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> IA_Boost;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float MoveSpeed = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	float TurnSpeed = 200.0f;
 	
-	// --- Snake segment properties ---
+	// --- Snake Segment Properties ---
 	
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
 	TSubclassOf<ASnakeSegment> SegmentClass;
@@ -94,56 +93,51 @@ protected:
 	TSubclassOf<ASnakeSegment> SnakeSegment;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Snake")
-    TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
+	TArray<TObjectPtr<UMaterialInstance>> WatercolorMaterials;
 	
 	// --- Snake Powers ---
 	
-	// Active power state
 	bool bIsInvisible = false;
 	float ActiveSpeedMultiplier = 1.0f;
 	
-	// Timer for power duration
 	FTimerHandle InvisibilityTimer;
 	FTimerHandle SpeedBoostTimer;
 	
-	// Power appliers
 	void ApplySpeedBoost(float Multiplier, float Duration);
 	void ApplyInvisibility(float Duration);
-
-	// Power removers
 	void RemoveSpeedBoost();
 	void RemoveInvisibility();
 	
 	// --- Snake Boost ---
-	bool bWantsToBoost = false; // boost input
-	bool bWantsToBoost2 = false;
 	
-	// Boost bar (0.0 = empty, 1.0 = full)
+	bool bWantsToBoost = false;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
 	float BoostCharge = 1.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
-	float BoostDrainRate = 0.2f; // Per second while boosting
+	float BoostDrainRate = 0.2f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
-	float BoostRefillRate = 0.1f; // Per second while not boosting
+	float BoostRefillRate = 0.1f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Boost")
-	float BoostSpeedMultiplier = 1.8f; // How fast during boost
+	float BoostSpeedMultiplier = 1.8f;
 	
-	bool bUnlimitedBoost = false; // Speed boost for food type
-	FTimerHandle UnlimitedBoostTimer; // Speed boost timer
+	bool bUnlimitedBoost = false;
+	FTimerHandle UnlimitedBoostTimer;
 	
 	UFUNCTION(BlueprintCallable)
 	float GetBoostCharge() const { return BoostCharge; }
 	
 	UFUNCTION(BlueprintCallable)
-	bool IsUnlimitedBoost() const { return bUnlimitedBoost;	}
+	bool IsUnlimitedBoost() const { return bUnlimitedBoost; }
 	
 	void ApplyUnlimitedBoost(float Duration);
 	void RemoveUnlimitedBoost();
 	
 	// --- Grid ---
+	
 	FSnakeGrid Grid;
 	
 	UPROPERTY(EditAnywhere, Category="Grid")
@@ -158,37 +152,35 @@ protected:
 	FIntPoint WorldToGrid(FVector WorldPos) const;
 	FVector GridToWorld(FIntPoint GridPos) const;
 	FVector GetRandomEmptyCell() const;
-	// ----------------------------------------------------------------------------------------
+
 #pragma endregion
 	
 #pragma region HUDPROPERTIES
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
-
+	
 	USnakeHUD* HUDWidget;
 	
 	void UpdateHUDScore() const;
 	
 	int32 Score = 0;
-	
+
 #pragma endregion
 	
-	// Hit event for food overlap
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-        bool bFromSweep, const FHitResult& SweepResult);
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
 	
-	// Hit event for wall collision
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
-	void AddSegment(); // Adding snake segment for food collection
-	void SetupSegmentPositions(); // First additional segments (body of snake)
+	void AddSegment();
+	void SetupSegmentPositions();
 	
-	// --- Tick Helpers ---	
+	// --- Tick Helpers ---
 	void UpdateBoostState(float DeltaTime);	
 	void UpdateMovement(float DeltaTime);
 	void UpdateSegments();	
@@ -198,13 +190,10 @@ protected:
 	// --- Initialization ---
 	void InitGrid();
 	void InitSnake();
-	void InitInput() const;
 	void InitHUD();
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+public:	
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -212,5 +201,9 @@ private:
 	float TurnInput = 0.0f;
 	
 	int32 LastMaterialIndex = -1;
-    UMaterialInstance* GetNextMaterial();
+	UMaterialInstance* GetNextMaterial();
+
+	// IMC injected by GameMode — takes priority over the Blueprint default InputMappingContext
+	UPROPERTY()
+	TObjectPtr<UInputMappingContext> AssignedIMC;
 };

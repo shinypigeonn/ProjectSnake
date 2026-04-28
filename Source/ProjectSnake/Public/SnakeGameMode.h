@@ -51,7 +51,7 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	virtual void BeginPlay() override;
 	
 	// --- Game mode ---
-	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ASnakePawn> SnakePawnClass;
 	
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
@@ -62,10 +62,10 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	// Player1IMC = WASD mapping context
 	// Player2IMC = Arrow Keys mapping context
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<UInputMappingContext> Player1IMC;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputMappingContext> Player2IMC;
  
 	// Widget to show on a player's screen when they lose
