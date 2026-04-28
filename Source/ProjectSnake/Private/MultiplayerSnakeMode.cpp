@@ -1,9 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MultiplayerSnakeMode.h"
 #include "SnakePawn.h"
+#include "SnakeGameInstance.h"
 #include "SnakePlayerController.h"
-#include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,75 +14,139 @@ AMultiplayerSnakeMode::AMultiplayerSnakeMode()
 void AMultiplayerSnakeMode::BeginPlay()
 {
 	Super::BeginPlay();
-	SpawnAndPossessPlayers();
-	SetGameState(EGameState::Playing);
+
+	// Read mode from GameInstance — set by Main Menu before loading this level.
+	if (USnakeGameInstance* GI = Cast<USnakeGameInstance>(GetGameInstance()))
+		bIsMultiplayer = (GI->SelectedMode == ESnakeGameMode::Multiplayer);
+
+	SpawnPlayers();
+	StartCountdown();
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-// SETUP
+// SPAWNING
 // ────────────────────────────────────────────────────────────────────────────────
-#pragma region SETUP
 
-static FTransform ResolveSpawnTransform(UWorld* World, const FTransform& Explicit, int32 PlayerIndex)
+static FTransform ResolveSpawn(UWorld* World, const FTransform& Explicit, int32 Index)
 {
-	if (!Explicit.GetLocation().IsNearlyZero())
-		return Explicit;
- 
+	if (!Explicit.GetLocation().IsNearlyZero()) return Explicit;
 	TArray<AActor*> Starts;
 	UGameplayStatics::GetAllActorsOfClass(World, APlayerStart::StaticClass(), Starts);
-	if (Starts.IsValidIndex(PlayerIndex))
-		return Starts[PlayerIndex]->GetActorTransform();
- 
-	UE_LOG(LogTemp, Warning, TEXT("MultiplayerSnakeMode: No spawn point for Player %d."), PlayerIndex);
+	if (Starts.IsValidIndex(Index)) return Starts[Index]->GetActorTransform();
 	return FTransform::Identity;
 }
- 
-void AMultiplayerSnakeMode::SpawnAndPossessPlayers()
+
+void AMultiplayerSnakeMode::SpawnPlayers()
+{
+	if (bIsMultiplayer)
+		SpawnMultiplayer();
+	else
+		SpawnSinglePlayer();
+}
+
+void AMultiplayerSnakeMode::SpawnSinglePlayer()
 {
 	if (!SnakePawnClass) return;
 	UWorld* World = GetWorld();
-	if (!World) return;
- 
+
+	APlayerController* PC0 = UGameplayStatics::GetPlayerController(World, 0);
+	if (!PC0) PC0 = UGameplayStatics::CreatePlayer(World, 0, false);
+	if (!PC0) return;
+
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
- 
+
+	ASnakePawn* Pawn = World->SpawnActor<ASnakePawn>(
+		SnakePawnClass, ResolveSpawn(World, Player1SpawnTransform, 0), Params);
+	if (Pawn)
+	{
+		PC0->Possess(Pawn);
+		ActivePlayerCount++;
+	}
+}
+
+void AMultiplayerSnakeMode::SpawnMultiplayer()
+{
+	if (!SnakePawnClass) return;
+	UWorld* World = GetWorld();
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 	// --- Player 1 ---
-	// IMC and actions are set in BP_SnakePlayerController defaults — no override needed.
 	APlayerController* PC0 = UGameplayStatics::GetPlayerController(World, 0);
 	if (!PC0) PC0 = UGameplayStatics::CreatePlayer(World, 0, false);
 	if (PC0)
 	{
 		ASnakePawn* Pawn1 = World->SpawnActor<ASnakePawn>(
-			SnakePawnClass, ResolveSpawnTransform(World, Player1SpawnTransform, 0), Params);
+			SnakePawnClass, ResolveSpawn(World, Player1SpawnTransform, 0), Params);
 		if (Pawn1)
 		{
 			PC0->Possess(Pawn1);
 			ActivePlayerCount++;
 		}
 	}
- 
-	// --- Player 2 ---
-	// Override IMC/actions with Arrow Keys mapping before possession.
+
+	// --- Player 2 — create second local player (enables split screen) ---
 	APlayerController* PC1 = UGameplayStatics::GetPlayerController(World, 1);
-	if (!PC1) PC1 = UGameplayStatics::CreatePlayer(World, 1, false);
+	if (!PC1) PC1 = UGameplayStatics::CreatePlayer(World, 1, true); // true = show splitscreen
 	if (PC1)
 	{
 		ASnakePawn* Pawn2 = World->SpawnActor<ASnakePawn>(
-			SnakePawnClass, ResolveSpawnTransform(World, Player2SpawnTransform, 1), Params);
+			SnakePawnClass, ResolveSpawn(World, Player2SpawnTransform, 1), Params);
 		if (Pawn2)
 		{
 			if (ASnakePlayerController* SC = Cast<ASnakePlayerController>(PC1))
-			{
 				SC->SetupPlayerInput(Player2IMC, Player2_IA_Move, Player2_IA_Turn, Player2_IA_Boost);
-			}
 			PC1->Possess(Pawn2);
 			ActivePlayerCount++;
 		}
 	}
 }
- 
 
-#pragma endregion
+// ────────────────────────────────────────────────────────────────────────────────
+// COUNTDOWN
+// ────────────────────────────────────────────────────────────────────────────────
+
+void AMultiplayerSnakeMode::StartCountdown()
+{
+	SetGameState(EGameState::Countdown);
+	CountdownSecondsRemaining = CountdownSeconds;
+
+	// Disable movement on all pawns during countdown
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+			PC->DisableInput(PC);
+	}
+
+	GetWorldTimerManager().SetTimer(
+		CountdownTimer, this, &AMultiplayerSnakeMode::CountdownTick, 1.0f, true);
+}
+
+void AMultiplayerSnakeMode::CountdownTick()
+{
+	CountdownSecondsRemaining--;
+
+	if (CountdownSecondsRemaining <= 0)
+	{
+		GetWorldTimerManager().ClearTimer(CountdownTimer);
+		StartPlay();
+	}
+	// The HUD widget can poll GetCountdownSeconds() via Blueprint to show the number.
+}
+
+void AMultiplayerSnakeMode::StartPlay()
+{
+	SetGameState(EGameState::Playing);
+
+	// Re-enable input on all pawns
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+			PC->EnableInput(PC);
+	}
+}
 
 // ────────────────────────────────────────────────────────────────────────────────
 // PER-PLAYER DEATH
@@ -120,16 +182,13 @@ void AMultiplayerSnakeMode::OnPlayerDied(ASnakePawn* DeadPawn)
 // GAME STATES
 // ────────────────────────────────────────────────────────────────────────────────
 
-void AMultiplayerSnakeMode::SetGameState(EGameState NewState)
-{
-	CurrentState = NewState;
-}
+void AMultiplayerSnakeMode::SetGameState(EGameState NewState) { CurrentState = NewState; }
 
 void AMultiplayerSnakeMode::OnGameOver()
 {
 	if (CurrentState != EGameState::Playing) return;
 	SetGameState(EGameState::GameOver);
-	UGameplayStatics::OpenLevel(this, FName("GameOverMap"), true);
+	UGameplayStatics::OpenLevel(this, FName("MainMenuMap"), true);
 }
 
 void AMultiplayerSnakeMode::RestartGame()

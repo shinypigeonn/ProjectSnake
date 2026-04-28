@@ -1,18 +1,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SnakeGrid.h"
 #include "InputMappingContext.h"
 #include "GameFramework/GameMode.h"
 #include "MultiplayerSnakeMode.generated.h"
 
 class ASnakePawn;
+class UInputAction;
 
 UENUM(BlueprintType)
 enum class EGameState : uint8
 {
 	MainMenu       UMETA(DisplayName = "Main Menu"),
-	WaitingToStart UMETA(DisplayName = "Waiting to Start"),
+	Countdown      UMETA(DisplayName = "Countdown"),
 	Playing        UMETA(DisplayName = "Playing"),
 	GameOver       UMETA(DisplayName = "Game Over"),
 	Restarting     UMETA(DisplayName = "Restarting"),
@@ -32,15 +32,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category="GameMode")
 	void OnGameOver();
 
-	// AGameMode already declares RestartGame() as a UFUNCTION — just override it.
 	virtual void RestartGame() override;
 
 	UFUNCTION(BlueprintPure, Category="GameMode")
 	EGameState GetCurrentState() const { return CurrentState; }
 
+	UFUNCTION(BlueprintPure, Category="GameMode")
+	int32 GetCountdownSeconds() const { return CountdownSecondsRemaining; }
+
 protected:
 	virtual void BeginPlay() override;
 
+	// --- Spawning ---
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	TSubclassOf<ASnakePawn> SnakePawnClass;
 
@@ -50,35 +53,44 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	FTransform Player2SpawnTransform;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputMappingContext> Player1IMC;
-
+	// --- Input (Player 2 only — Player 1 set on BP_SnakePlayerController) ---
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> Player2IMC;
-	
-	// Player 2's separate IMC and actions (Arrow Keys)
-	// Player 1's are set directly on BP_SnakePlayerController defaults
-    
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Player2_IA_Move;
-    
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Player2_IA_Turn;
-    
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Player2_IA_Boost;
 
+	// --- UI ---
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
 
+	// --- Countdown ---
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	int32 CountdownSeconds = 3;
+
+	// --- Restart ---
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	float RestartDelay = 3.0f;
 
 private:
 	EGameState CurrentState = EGameState::MainMenu;
 	FTimerHandle RestartTimer;
+	FTimerHandle CountdownTimer;
 	int32 ActivePlayerCount = 0;
+	int32 CountdownSecondsRemaining = 0;
+	bool bIsMultiplayer = false;
 
-	void SpawnAndPossessPlayers();
+	void SpawnPlayers();
+	void SpawnSinglePlayer();
+	void SpawnMultiplayer();
+	void StartCountdown();
+	void CountdownTick();
+	void StartPlay();
 	void SetGameState(EGameState NewState);
 };

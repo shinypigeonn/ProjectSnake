@@ -14,9 +14,11 @@
 void ASnakePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	RegisterIMC();
+}
 
-	// Register the IMC into the Enhanced Input subsystem.
-	// At BeginPlay the local player is valid, so this is safe.
+void ASnakePlayerController::RegisterIMC()
+{
 	if (ULocalPlayer* LP = GetLocalPlayer())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -29,8 +31,8 @@ void ASnakePlayerController::BeginPlay()
 	}
 }
 
-// Called by GameMode BEFORE possession to swap in a different IMC/actions
-// for Player 2 (Arrow Keys) without needing a second controller Blueprint.
+// Called by GameMode for Player 2 to swap in Arrow Keys IMC and actions.
+// Rebinds actions immediately so timing doesn't matter.
 void ASnakePlayerController::SetupPlayerInput(
 	UInputMappingContext* IMC,
 	UInputAction* MoveAction,
@@ -42,15 +44,29 @@ void ASnakePlayerController::SetupPlayerInput(
 	IA_Turn  = TurnAction;
 	IA_Boost = BoostAction;
 
-	// Re-register if we're already past BeginPlay
-	if (ULocalPlayer* LP = GetLocalPlayer())
+	// Re-register IMC
+	RegisterIMC();
+
+	// Rebind actions — SetupInputComponent already ran, so we need to
+	// clear and re-add bindings with the new action assets.
+	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		EIC->ClearActionBindings();
+
+		if (IA_Move)
 		{
-			Subsystem->ClearAllMappings();
-			if (InputMapping)
-				Subsystem->AddMappingContext(InputMapping, 0);
+			EIC->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ASnakePlayerController::Move);
+			EIC->BindAction(IA_Move, ETriggerEvent::Completed, this, &ASnakePlayerController::Move);
+		}
+		if (IA_Turn)
+		{
+			EIC->BindAction(IA_Turn, ETriggerEvent::Triggered, this, &ASnakePlayerController::Turn);
+			EIC->BindAction(IA_Turn, ETriggerEvent::Completed, this, &ASnakePlayerController::Turn);
+		}
+		if (IA_Boost)
+		{
+			EIC->BindAction(IA_Boost, ETriggerEvent::Triggered,  this, &ASnakePlayerController::OnBoostPressed);
+			EIC->BindAction(IA_Boost, ETriggerEvent::Completed,  this, &ASnakePlayerController::OnBoostReleased);
 		}
 	}
 }
@@ -94,24 +110,24 @@ ASnakePawn* ASnakePlayerController::GetSnakePawn() const
 
 void ASnakePlayerController::Move(const FInputActionValue& Value)
 {
-	if (ASnakePawn* Pawn = GetSnakePawn())
-		Pawn->Move(Value);
+	if (ASnakePawn* SnakePawn = GetSnakePawn())
+		SnakePawn->Move(Value);
 }
 
 void ASnakePlayerController::Turn(const FInputActionValue& Value)
 {
-	if (ASnakePawn* Pawn = GetSnakePawn())
-		Pawn->Turn(Value);
+	if (ASnakePawn* SnakePawn = GetSnakePawn())
+		SnakePawn->Turn(Value);
 }
 
 void ASnakePlayerController::OnBoostPressed()
 {
-	if (ASnakePawn* Pawn = GetSnakePawn())
-		Pawn->OnBoostPressed();
+	if (ASnakePawn* SnakePawn = GetSnakePawn())
+		SnakePawn->OnBoostPressed();
 }
 
 void ASnakePlayerController::OnBoostReleased()
 {
-	if (ASnakePawn* Pawn = GetSnakePawn())
-		Pawn->OnBoostReleased();
+	if (ASnakePawn* SnakePawn = GetSnakePawn())
+		SnakePawn->OnBoostReleased();
 }
