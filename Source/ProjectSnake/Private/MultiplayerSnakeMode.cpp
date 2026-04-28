@@ -13,14 +13,25 @@ AMultiplayerSnakeMode::AMultiplayerSnakeMode()
 
 void AMultiplayerSnakeMode::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+    
+    UE_LOG(LogTemp, Warning, TEXT("=== MultiplayerSnakeMode BeginPlay ==="));
+    
+    if (USnakeGameInstance* GI = Cast<USnakeGameInstance>(GetGameInstance()))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameInstance cast SUCCESS, mode: %d"), (int32)GI->SelectedMode);
+        bIsMultiplayer = (GI->SelectedMode == ESnakeGameMode::Multiplayer);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameInstance cast FAILED"));
+    }
 
-	// Read mode from GameInstance — set by Main Menu before loading this level.
-	if (USnakeGameInstance* GI = Cast<USnakeGameInstance>(GetGameInstance()))
-		bIsMultiplayer = (GI->SelectedMode == ESnakeGameMode::Multiplayer);
+    UE_LOG(LogTemp, Warning, TEXT("bIsMultiplayer: %d"), bIsMultiplayer);
+    UE_LOG(LogTemp, Warning, TEXT("SnakePawnClass is: %s"), SnakePawnClass ? *SnakePawnClass->GetName() : TEXT("NULL"));
 
-	SpawnPlayers();
-	StartCountdown();
+    SpawnPlayers();
+    StartCountdown();
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -46,7 +57,15 @@ void AMultiplayerSnakeMode::SpawnPlayers()
 
 void AMultiplayerSnakeMode::SpawnSinglePlayer()
 {
-	if (!SnakePawnClass) return;
+
+    UE_LOG(LogTemp, Warning, TEXT("=== SpawnSinglePlayer called ==="));
+    
+    if (!SnakePawnClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("FAILED: SnakePawnClass is null"));
+        return;
+    }
+ 
 	UWorld* World = GetWorld();
 
 	APlayerController* PC0 = UGameplayStatics::GetPlayerController(World, 0);

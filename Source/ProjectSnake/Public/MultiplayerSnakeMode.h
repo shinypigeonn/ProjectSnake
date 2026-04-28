@@ -54,16 +54,16 @@ protected:
 	FTransform Player2SpawnTransform;
 
 	// --- Input (Player 2 only — Player 1 set on BP_SnakePlayerController) ---
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputMappingContext> Player2IMC;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputAction> Player2_IA_Move;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputAction> Player2_IA_Turn;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputAction> Player2_IA_Boost;
 
 	// --- UI ---
@@ -71,11 +71,11 @@ protected:
 	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
 
 	// --- Countdown ---
-	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CountdownSeconds = 3;
 
 	// --- Restart ---
-	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RestartDelay = 3.0f;
 
 private:
