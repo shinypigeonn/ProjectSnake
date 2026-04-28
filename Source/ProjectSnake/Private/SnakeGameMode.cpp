@@ -2,6 +2,7 @@
 
 #include "SnakeGameMode.h"
 #include "SnakePawn.h"
+#include "SnakeGameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -129,6 +130,20 @@ void ASnakeGameMode::OnGameOver()
 	if (CurrentState != EGameState::Playing) return; // Prevent duplicate calls
 
 	SetGameState(EGameState::GameOver);
+		// Save scores to GameInstance so the Outro screen can read them
+	if (USnakeGameInstance* GI = Cast<USnakeGameInstance>(GetGameInstance()))
+	{
+		// Grab score from Player 1's pawn
+		if (APlayerController* PC0 = UGameplayStatics::GetPlayerController(this, 0))
+			if (ASnakePawn* Pawn = Cast<ASnakePawn>(PC0->GetPawn()))
+				GI->FinalScore = Pawn->GetScore();
+
+		// Grab score from Player 2's pawn
+		if (APlayerController* PC1 = UGameplayStatics::GetPlayerController(this, 1))
+			if (ASnakePawn* Pawn = Cast<ASnakePawn>(PC1->GetPawn()))
+				GI->FinalScoreP2 = Pawn->GetScore();
+	}
+	
 	UGameplayStatics::OpenLevel(this, FName("GameOverMap"), true);
 }
 

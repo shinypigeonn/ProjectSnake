@@ -177,6 +177,7 @@ protected:
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
+	
 	void AddSegment();
 	void SetupSegmentPositions();
 	
@@ -196,6 +197,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION(BlueprintPure, Category="Score")
+	int32 GetScore() const { return Score; }
+	
 private:
 	float MoveInput = 0.0f;
 	float TurnInput = 0.0f;
