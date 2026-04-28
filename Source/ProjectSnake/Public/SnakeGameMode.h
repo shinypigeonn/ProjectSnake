@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "SnakeGrid.h"
+#include "InputMappingContext.h"
 #include "SnakeGameMode.generated.h"
+
+class ASnakePawn;
 
 UENUM(BlueprintType)
 enum class EGameState : uint8
@@ -21,6 +25,8 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+	FSnakeGrid Grid;
+	
 	public:
 	ASnakeGameMode();
 	UFUNCTION(BlueprintCallable, Category="GameMode")
@@ -28,6 +34,9 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	UFUNCTION(BlueprintCallable, Category="GameMode")
 	void OnPlay();	
+	
+	UFUNCTION(BlueprintCallable, Category="GameMode")
+	void OnPlayerDied(ASnakePawn* DeadPawn);
 	
 	UFUNCTION(BlueprintCallable, Category="GameMode")
 	void OnGameOver();
@@ -41,13 +50,50 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	protected:
 	virtual void BeginPlay() override;
 	
+	// --- Game mode ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ASnakePawn> SnakePawnClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	FTransform Player1SpawnTransform;
+	
+	UPROPERTY(EditDefaultsOnly, Category="GameMode")
+	FTransform Player2SpawnTransform;
+	
+	// Player1IMC = WASD mapping context
+	// Player2IMC = Arrow Keys mapping context
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<UInputMappingContext> Player1IMC;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UInputMappingContext> Player2IMC;
+ 
+	// Widget to show on a player's screen when they lose
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> PlayerGameOverWidgetClass;
+	
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	float RestartDelay = 3.0f;
 	
+	// --- Grid ---
+	UPROPERTY(EditDefaultsOnly, Category="Grid")
+	TSubclassOf<AActor> TileBP;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Grid")
+	float TileSize = 100.f;
+	
+	TArray<AActor*> TileActors;
+	
+	void SpawnTiles();
+	void RefreshTile(FIntPoint Pos);
+	
 	private:
 	EGameState CurrentState = EGameState::MainMenu;
-	
 	FTimerHandle RestartTimer;
 	
+	int32 ActivePlayerCount = 0; // How many snakes are still alive
+	
+	void SpawnAndPossessPlayers();
 	void SetGameState(EGameState newState);
+
 };
