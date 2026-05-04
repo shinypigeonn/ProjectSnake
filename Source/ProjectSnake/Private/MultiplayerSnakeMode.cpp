@@ -10,7 +10,7 @@
 
 AMultiplayerSnakeMode::AMultiplayerSnakeMode()
 {
-	// Disable the default single-pawn auto-spawn so we control it ourselves
+
 	DefaultPawnClass = nullptr;
 }
 
@@ -90,8 +90,7 @@ void AMultiplayerSnakeMode::OnPlayerDied(ASnakePawn* DeadPawn)
 			if (Widget) Widget->AddToPlayerScreen(); // AddToPlayerScreen = this viewport only
 		}
 	}
- 
-	// Destroy the dead snake
+	
 	DeadPawn->Destroy();
  
 	// Track how many players are left

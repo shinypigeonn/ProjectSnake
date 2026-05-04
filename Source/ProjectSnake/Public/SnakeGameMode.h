@@ -60,6 +60,7 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	FTransform Player2SpawnTransform;
 	
+	
 	// Player1IMC = WASD mapping context
 	// Player2IMC = Arrow Keys mapping context
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -90,6 +91,9 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	private:
 	EGameState CurrentState = EGameState::MainMenu;
 	FTimerHandle RestartTimer;
+	
+	UPROPERTY()
+	int32 NumPlayers = 1;
 	
 	int32 ActivePlayerCount = 0; // How many snakes are still alive
 	

@@ -15,6 +15,13 @@ ASnakeGameMode::ASnakeGameMode()
 void ASnakeGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	    // Read the ?players=2 option from the URL
+    FString PlayersOption = UGameplayStatics::ParseOption(
+        OptionsString, TEXT("players"));
+    
+    NumPlayers = PlayersOption.IsEmpty() ? 1 : FCString::Atoi(*PlayersOption);
+
 	SpawnAndPossessPlayers();
 	SetGameState(EGameState::Playing);
 }
@@ -26,44 +33,46 @@ void ASnakeGameMode::BeginPlay()
 
 void ASnakeGameMode::SpawnAndPossessPlayers()
 {
-	if (!SnakePawnClass) return;
-	UWorld* World = GetWorld();
-	if (!World) return;
-	
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	
-	// --- Player 1 ---
-	APlayerController* PC0 = UGameplayStatics::GetPlayerController(this, 0);
-	if (!PC0)
-		PC0 = UGameplayStatics::CreatePlayer(this, 0, true);
- 
-	if (PC0)
-	{
-		ASnakePawn* Pawn1 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player1SpawnTransform, Params);
-		if (Pawn1)
-		{
-			Pawn1->ApplyIMC(Player1IMC); // WASD
-			ActivePlayerCount++;
-			PC0->Possess(Pawn1);
-		}
-	}
-	
-	// --- Player 2 ---
-	APlayerController* PC1 = UGameplayStatics::GetPlayerController(this, 1);
-	if (!PC1)
-		PC1 = UGameplayStatics::CreatePlayer(this, 1, true);
- 
-	if (PC1)
-	{
-		ASnakePawn* Pawn2 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player2SpawnTransform, Params);
-		if (Pawn2)
-		{
-			Pawn2->ApplyIMC(Player2IMC); // Arrow keys
-			ActivePlayerCount++;	
-			PC1->Possess(Pawn2);
-		}
-	}
+    if (!SnakePawnClass) return;
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    // --- Player 1 (always) ---
+    APlayerController* PC0 = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC0)
+        PC0 = UGameplayStatics::CreatePlayer(this, 0, true);
+
+    if (PC0)
+    {
+        ASnakePawn* Pawn1 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player1SpawnTransform, Params);
+        if (Pawn1)
+        {
+            Pawn1->ApplyIMC(Player1IMC);
+            ActivePlayerCount++;
+            PC0->Possess(Pawn1);
+        }
+    }
+
+    // --- Player 2 (only in multiplayer) ---
+    if (NumPlayers < 2) return;
+
+    APlayerController* PC1 = UGameplayStatics::GetPlayerController(this, 1);
+    if (!PC1)
+        PC1 = UGameplayStatics::CreatePlayer(this, 1, true);
+
+    if (PC1)
+    {
+        ASnakePawn* Pawn2 = World->SpawnActor<ASnakePawn>(SnakePawnClass, Player2SpawnTransform, Params);
+        if (Pawn2)
+        {
+            Pawn2->ApplyIMC(Player2IMC);
+            ActivePlayerCount++;
+            PC1->Possess(Pawn2);
+        }
+    }
 }
 
 #pragma endregion
