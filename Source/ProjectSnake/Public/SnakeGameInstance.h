@@ -15,6 +15,9 @@ class PROJECTSNAKE_API USnakeGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(BlueprintReadWrite, Category="Game")
+	bool bIsMultiplayer = false;
+	
 	UPROPERTY(BlueprintReadWrite, Category="Score")
 	int32 FinalScore = 0;
 	

@@ -15,6 +15,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ASnakeGameMode;
 
 UCLASS()
 class PROJECTSNAKE_API ASnakePawn : public APawn
@@ -203,6 +204,8 @@ public:
 private:
 	float MoveInput = 0.0f;
 	float TurnInput = 0.0f;
+	
+	ASnakeGameMode* GameMode = nullptr;
 	
 	int32 LastMaterialIndex = -1;
 	UMaterialInstance* GetNextMaterial();

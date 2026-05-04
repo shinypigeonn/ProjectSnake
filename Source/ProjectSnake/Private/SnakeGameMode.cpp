@@ -14,16 +14,21 @@ ASnakeGameMode::ASnakeGameMode()
 
 void ASnakeGameMode::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	    // Read the ?players=2 option from the URL
-    FString PlayersOption = UGameplayStatics::ParseOption(
-        OptionsString, TEXT("players"));
-    
-    NumPlayers = PlayersOption.IsEmpty() ? 1 : FCString::Atoi(*PlayersOption);
+    Super::BeginPlay();
 
-	SpawnAndPossessPlayers();
-	SetGameState(EGameState::Playing);
+    USnakeGameInstance* GI = Cast<USnakeGameInstance>(GetGameInstance());
+    NumPlayers = (GI && GI->bIsMultiplayer) ? 2 : 1;
+
+    SpawnAndPossessPlayers();
+	SetGameState(EGameState::CountDown);
+	GetWorldTimerManager().SetTimer(CountDownTimer, this, &ASnakeGameMode::TickCountDown, 1.0f, true);
+	
+	if (CountdownWidgetClass)
+	{
+		CountdownWidget = CreateWidget<UUserWidget>(GetWorld(), CountdownWidgetClass);
+		if (CountdownWidget)
+			CountdownWidget->AddToViewport();
+	}
 }
 
 //  ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -130,7 +135,7 @@ void ASnakeGameMode::MainMenu()
 
 void ASnakeGameMode::OnPlay()
 {
-    if (CurrentState != EGameState::WaitingToStart) return;
+    if (CurrentState != EGameState::CountDown) return;
     SetGameState(EGameState::Playing);
 }
 
@@ -160,6 +165,19 @@ void ASnakeGameMode::RestartGame()
 {
 	SetGameState(EGameState::Restarting);
 	//UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), true);
+}
+
+void ASnakeGameMode::TickCountDown()
+{
+	if (CountDownValue > 1)
+	{
+		--CountDownValue;
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(CountDownTimer);
+		SetGameState(EGameState::Playing);
+	}
 }
 
 #pragma endregion

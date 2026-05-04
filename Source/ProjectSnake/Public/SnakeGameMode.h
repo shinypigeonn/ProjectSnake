@@ -14,7 +14,7 @@ UENUM(BlueprintType)
 enum class EGameState : uint8
 {
 	MainMenu	     UMETA(DisplayName = "Main Menu"),
-	WaitingToStart   UMETA(DisplayName = "Wait to Start Game"), 
+	CountDown        UMETA(DisplayName = "Count Down to Play"),
 	Playing		     UMETA(DisplayName = "Playing"),
 	GameOver	     UMETA(DisplayName = "Game Over"),
 	Restarting       UMETA(DisplayName = "Restart"),
@@ -60,9 +60,11 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	UPROPERTY(EditDefaultsOnly, Category="GameMode")
 	FTransform Player2SpawnTransform;
 	
+	UPROPERTY(BlueprintReadOnly)
+	int32 CountDownValue = 3;
 	
 	// Player1IMC = WASD mapping context
-	// Player2IMC = Arrow Keys mapping context
+	// Player2IMC = GAMEPAD mapping context
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<UInputMappingContext> Player1IMC;
 	
@@ -84,13 +86,22 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	float TileSize = 100.f;
 	
 	TArray<AActor*> TileActors;
-	
 	void SpawnTiles();
 	void RefreshTile(FIntPoint Pos);
+	
+	// --- Countdown UI ---
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> CountdownWidgetClass;
+	
+	UPROPERTY()
+	UUserWidget* CountdownWidget = nullptr;
 	
 	private:
 	EGameState CurrentState = EGameState::MainMenu;
 	FTimerHandle RestartTimer;
+	FTimerHandle CountDownTimer;
+	
+	void TickCountDown();
 	
 	UPROPERTY()
 	int32 NumPlayers = 1;
@@ -99,5 +110,4 @@ class PROJECTSNAKE_API ASnakeGameMode : public AGameModeBase
 	
 	void SpawnAndPossessPlayers();
 	void SetGameState(EGameState newState);
-
 };

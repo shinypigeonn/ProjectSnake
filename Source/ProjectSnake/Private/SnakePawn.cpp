@@ -47,6 +47,7 @@ ASnakePawn::ASnakePawn()
 void ASnakePawn::BeginPlay()
 {
 	Super::BeginPlay();
+	GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode());
 	
 	InitGrid();
 	InitSnake();
@@ -219,8 +220,8 @@ void ASnakePawn::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 			int32 SegIndex = Segments.IndexOfByKey(HitSegment);
 			if (SegIndex >= 0 && SegIndex < 3) return; // ignore own near segments
 		}
-
-		if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+		
+		if (GameMode)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Hit a snake segment — game over!"));
 			GameMode->OnGameOver();
@@ -238,7 +239,7 @@ void ASnakePawn::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 
 	if (OtherActor && OtherActor->ActorHasTag(FName("Wall")))
 	{
-		if (ASnakeGameMode* GameMode = Cast<ASnakeGameMode>(GetWorld()->GetAuthGameMode()))
+		if (GameMode)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Hit a WALL!"));
 			GameMode->OnGameOver();
@@ -273,6 +274,8 @@ void ASnakePawn::UpdateBoostState(float DeltaTime)
 
 void ASnakePawn::UpdateMovement(float DeltaTime)
 {
+	if (!GameMode || GameMode->GetCurrentState() != EGameState::Playing) return;;
+	
 	if (!FMath::IsNearlyZero(TurnInput))
 		AddActorLocalRotation(FRotator(0.0f, TurnInput * TurnSpeed * DeltaTime, 0.0f));
 
